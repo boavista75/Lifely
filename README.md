@@ -2,9 +2,9 @@
 
 Personal life OS — calendar, todos, notes, knowledge, and finances.
 
-Lifely je lična web aplikacija za organizaciju dana: kalendar i todo na istim stavkama, beleške, baza znanja i (uskoro) finansije. Interfejs je na **srpskom (latinica)**. Dizajnirana je za telefon i desktop — donji tabovi na mobilnom, sidebar na širem ekranu — i može da se doda na početni ekran kao PWA.
+Lifely je lična web aplikacija za organizaciju dana: kalendar i todo, beleške, baza znanja i (uskoro) finansije. Interfejs je na **srpskom (latinica)**. Dizajnirana i optimizovana je za telefon i desktop.
 
-Nema naloga, nema servera. Sve ostaje u browseru na tom uređaju.
+Trenutno nema naloga i servera. Sve ostaje u browseru na tom uređaju.
 
 ## Stanje
 
