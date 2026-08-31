@@ -1,0 +1,291 @@
+import { KbMediaControl } from "@/components/KbMediaControl";
+import { KbPageLinkControl } from "@/components/KbPageLinkControl";
+import { KbExplorer } from "@/components/KbExplorer";
+import { RichEditorToolbar } from "@/components/RichEditorToolbar";
+import { IconChevron, IconSearch } from "@/components/icons";
+import {
+  findInEditor,
+  KB_EXTENSIONS,
+  previewFindMatches,
+} from "@/lib/editor";
+import { MEDIA_ERROR_EVENT } from "@/lib/media";
+import { defaultPageTitle, isKbPage, pageIdFromHref } from "@/lib/kb";
+import { isBlankHtml, isDefaultNoteTitle } from "@/lib/notes";
+import { useItemsStore } from "@/store/useItemsStore";
+import { useKbStore } from "@/store/useKbStore";
+import { useUiStore } from "@/store/useUiStore";
+import type { LifelyKbPage } from "@/types";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { useEffect, useRef, useState } from "react";
+
+export function KnowledgeScreen() {
+  const nodes = useKbStore((state) => state.nodes);
+  const kbPageId = useUiStore((state) => state.kbPageId);
+  const page = nodes.find((node) => node.id === kbPageId && isKbPage(node));
+
+  if (page) return <KbPageEditor key={page.id} pageId={page.id} />;
+  return <KbExplorer variant="page" />;
+}
+
+function KbPageEditor({ pageId }: { pageId: string }) {
+  const nodes = useKbStore((state) => state.nodes);
+  const page = nodes.find(
+    (node): node is LifelyKbPage => node.id === pageId && isKbPage(node),
+  );
+  const updateNode = useKbStore((state) => state.updateNode);
+  const deleteNode = useKbStore((state) => state.deleteNode);
+  const closeKbPage = useUiStore((state) => state.closeKbPage);
+  const openKbPage = useUiStore((state) => state.openKbPage);
+  const requestDeleteKb = useUiStore((state) => state.requestDeleteKb);
+  const saveTimer = useRef<number | null>(null);
+  const updateRef = useRef(updateNode);
+  updateRef.current = updateNode;
+  const openPageRef = useRef(openKbPage);
+  openPageRef.current = openKbPage;
+  const initialContent = useRef(page?.content || "<p></p>");
+  const [findQuery, setFindQuery] = useState("");
+  const [findResult, setFindResult] = useState({ index: 0, total: 0 });
+  const [mediaMessage, setMediaMessage] = useState<string | null>(null);
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+
+  const editor = useEditor(
+    {
+      immediatelyRender: false,
+      shouldRerenderOnTransaction: true,
+      extensions: KB_EXTENSIONS,
+      content: initialContent.current,
+      editorProps: {
+        attributes: {
+          class: "note-body outline-none min-h-full",
+        },
+      },
+      onUpdate: ({ editor: instance }) => {
+        if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        saveTimer.current = window.setTimeout(() => {
+          updateRef.current(pageId, { content: instance.getHTML() });
+        }, 280);
+      },
+    },
+    [pageId],
+  );
+  editorRef.current = editor;
+
+  function goFind(direction: 1 | -1) {
+    if (!editor || editor.isDestroyed) return;
+    setFindResult(findInEditor(editor, findQuery, direction));
+  }
+
+  function onFindQueryChange(value: string) {
+    setFindQuery(value);
+    if (!editor || editor.isDestroyed) {
+      setFindResult({ index: 0, total: 0 });
+      return;
+    }
+    setFindResult(previewFindMatches(editor, value));
+  }
+
+  useEffect(() => {
+    function onError(event: Event) {
+      const message = (event as CustomEvent<string>).detail;
+      if (message) setMediaMessage(message);
+    }
+    window.addEventListener(MEDIA_ERROR_EVENT, onError);
+    return () => window.removeEventListener(MEDIA_ERROR_EVENT, onError);
+  }, []);
+
+  useEffect(() => {
+    if (!mediaMessage) return;
+    const timer = window.setTimeout(() => setMediaMessage(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [mediaMessage]);
+
+  useEffect(() => {
+    const dom = editor?.view.dom;
+    if (!dom) return;
+    function onClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      const id = pageIdFromHref(anchor?.getAttribute("href"));
+      if (!id || id === pageId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (saveTimer.current) window.clearTimeout(saveTimer.current);
+      const instance = editorRef.current;
+      if (instance && !instance.isDestroyed) {
+        updateRef.current(pageId, { content: instance.getHTML() });
+      }
+      const next = useKbStore
+        .getState()
+        .nodes.find((node) => node.id === id && isKbPage(node));
+      if (next) openPageRef.current(next.id, next.parentId);
+    }
+    dom.addEventListener("click", onClick);
+    return () => dom.removeEventListener("click", onClick);
+  }, [editor, pageId]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) window.clearTimeout(saveTimer.current);
+      if (editor && !editor.isDestroyed) {
+        updateNode(pageId, { content: editor.getHTML() });
+      }
+    };
+  }, [editor, pageId, updateNode]);
+
+  if (!page) return null;
+
+  function back() {
+    if (!page) {
+      closeKbPage();
+      return;
+    }
+    const untitled =
+      !page.title.trim() || isDefaultNoteTitle(page.title, page.createdAt);
+    if (isBlankHtml(page.content) && untitled) {
+      deleteNode(page.id);
+    } else if (!page.title.trim()) {
+      updateNode(page.id, { title: defaultPageTitle(new Date(page.createdAt)) });
+    }
+    closeKbPage();
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="flex shrink-0 items-center justify-between gap-2 px-2 pt-2 md:px-4 md:pt-5">
+        <button
+          type="button"
+          onClick={back}
+          className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
+        >
+          <IconChevron className="size-5" />
+          Knowledge
+        </button>
+        <button
+          type="button"
+          onClick={() => requestDeleteKb("kb-page", page.id)}
+          className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
+        >
+          Obriši
+        </button>
+      </header>
+      <input
+        value={page.title}
+        onChange={(event) => updateNode(page.id, { title: event.target.value })}
+        onBlur={() => {
+          if (!page.title.trim()) {
+            updateNode(page.id, {
+              title: defaultPageTitle(new Date(page.createdAt)),
+            });
+          }
+        }}
+        placeholder="Naslov"
+        className="w-full shrink-0 bg-transparent px-5 py-2 font-display text-[32px] font-semibold leading-tight tracking-[-0.03em] outline-none placeholder:text-ink-tertiary md:px-8"
+      />
+      {editor && (
+        <RichEditorToolbar
+          editor={editor}
+          extra={
+            <>
+              <KbMediaControl editor={editor} />
+              <KbPageLinkControl editor={editor} currentPageId={page.id} />
+            </>
+          }
+        />
+      )}
+      {editor && (
+        <div className="shrink-0 px-3 pb-2 md:px-6">
+          <div className="flex h-11 items-center gap-2 rounded-2xl bg-surface-2/90 px-3">
+            <IconSearch className="size-4 shrink-0 text-ink-tertiary" />
+            <input
+              value={findQuery}
+              onChange={(event) => onFindQueryChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  goFind(event.shiftKey ? -1 : 1);
+                }
+              }}
+              placeholder="Pronađi u tekstu"
+              aria-label="Pronađi u tekstu"
+              className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-tertiary"
+            />
+            {findQuery.trim() ? (
+              <span
+                aria-live="polite"
+                aria-label={
+                  findResult.total === 0
+                    ? "Nema podudaranja"
+                    : findResult.index > 0
+                      ? `${findResult.index} od ${findResult.total} podudaranja`
+                      : `${findResult.total} podudaranja`
+                }
+                className="shrink-0 tabular-nums text-[13px] text-ink-tertiary"
+              >
+                {findResult.total === 0
+                  ? "0"
+                  : findResult.index > 0
+                    ? `${findResult.index} od ${findResult.total}`
+                    : String(findResult.total)}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              aria-label="Prethodno"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => goFind(-1)}
+              className="grid size-8 place-items-center text-ink-secondary"
+            >
+              <IconChevron className="size-4 rotate-90" />
+            </button>
+            <button
+              type="button"
+              aria-label="Sledeće"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => goFind(1)}
+              className="grid size-8 place-items-center text-ink-secondary"
+            >
+              <IconChevron className="size-4 -rotate-90" />
+            </button>
+          </div>
+          {mediaMessage ? (
+            <p className="px-1 pt-1.5 text-[13px] text-danger">{mediaMessage}</p>
+          ) : null}
+        </div>
+      )}
+      <div
+        data-kb-page-scroll
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 md:px-8"
+      >
+        <EditorContent editor={editor} className="h-full min-h-[50%]" />
+        <LinkedTodos pageId={page.id} />
+      </div>
+    </div>
+  );
+}
+
+function LinkedTodos({ pageId }: { pageId: string }) {
+  const items = useItemsStore((state) => state.items);
+  const linked = items.filter((item) => item.kbPageId === pageId);
+  const openEditItem = useUiStore((state) => state.openEditItem);
+  if (linked.length === 0) return null;
+
+  return (
+    <section className="mt-8 pb-8">
+      <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
+        Povezane stavke
+      </h2>
+      <div className="card overflow-hidden rounded-[22px]">
+        {linked.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => openEditItem(item.id)}
+            className="flex min-h-12 w-full items-center px-4 text-left text-[15px] shadow-[0_0.5px_0_0_var(--hairline)] last:shadow-none"
+          >
+            {item.title}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
