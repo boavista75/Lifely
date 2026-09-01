@@ -10,7 +10,7 @@ The UI is **Serbian (Latin)**. There is currently no account and no server. Ever
 
 ## English
 
-Lifely is a personal web app for running a day: calendar and todos, notes, a knowledge wiki, and (soon) finances. It is designed and optimized for phone and desktop — a bottom tab bar on mobile, a sidebar on wider screens — and can be installed as a PWA from the home screen.
+Lifely is a personal web app for running a day: calendar and todos, notes, a knowledge wiki, and finances. It is designed and optimized for phone and desktop — a bottom tab bar on mobile, a sidebar on wider screens — and can be installed as a PWA from the home screen.
 
 ### Status
 
@@ -20,7 +20,7 @@ Lifely is a personal web app for running a day: calendar and todos, notes, a kno
 | Todo | Ready |
 | Notes | Ready |
 | Knowledge | Ready |
-| Finances | Placeholder — coming soon |
+| Finances | Ready |
 | Light / dark theme | Ready |
 
 ### What it does
@@ -61,6 +61,14 @@ A wiki, not a flat list:
   - **Find in page** (Enter / Shift+Enter)
 - Linked calendar/todo items at the bottom of the page
 
+#### Finances
+
+- Monthly **salary** in RSD, split **50 / 30 / 20**: Dina card (housing), Visa card (wants), cash/savings (locked)
+- **Expenses** by category and date; remaining amount per bucket is on the split graphic
+- **Payments outside salary** go to one bucket and are not split
+- Month history; overwriting a month’s salary resets that month’s expenses
+- Optional reminders: enter salary from the 10th, enter expenses at 22:00
+
 #### Also
 
 - Confirm before deleting an item, note, folder, or page
@@ -73,7 +81,7 @@ Everything is local to this browser:
 
 | What | Where |
 | --- | --- |
-| Items, notes, knowledge, active tab, theme | `localStorage` |
+| Items, notes, knowledge, finances, active tab, theme | `localStorage` |
 | Knowledge images and video | `IndexedDB` (`lifely-media`) |
 
 There is no sync across devices. A different browser, another phone, or clearing site data means a different (or empty) dataset. There is no backup off the device.
@@ -82,7 +90,7 @@ There is no sync across devices. A different browser, another phone, or clearing
 
 ## Srpski
 
-Lifely je lična web aplikacija za organizaciju dana: kalendar i todo, beleške, baza znanja i (uskoro) finansije. Interfejs je na **srpskom (latinica)**. Dizajnirana i optimizovana je za telefon i desktop.
+Lifely je lična web aplikacija za organizaciju dana: kalendar i todo, beleške, baza znanja i finansije. Interfejs je na **srpskom (latinica)**. Dizajnirana i optimizovana je za telefon i desktop.
 
 Trenutno nema naloga i servera. Sve ostaje u browseru na tom uređaju.
 
@@ -94,7 +102,7 @@ Trenutno nema naloga i servera. Sve ostaje u browseru na tom uređaju.
 | Todo | Radi |
 | Notes | Radi |
 | Knowledge | Radi |
-| Finansije | Placeholder — „stiže uskoro“ |
+| Finansije | Radi |
 | Svetla / tamna tema | Radi |
 
 ### Šta aplikacija radi
@@ -135,6 +143,14 @@ Wiki-struktura, ne flat lista:
   - **Pronađi u tekstu** (Enter / Shift+Enter)
 - Povezane kalendar/todo stavke na dnu stranice
 
+#### Finansije
+
+- Mesečna **plata** u RSD, podela **50 / 30 / 20**: Dina kartica (hausings), Visa kartica (želje), keš/ušteđevina (zaključano)
+- **Troškovi** po kategoriji i datumu; ostalo po grupi se vidi na grafiku
+- **Uplata van plate** ide u jednu grupu i ne deli se 50/30/20
+- Istorija meseci; preklop plate za isti mesec resetuje troškove tog meseca
+- Opcioni podsetnici: unos plate od 10. u mesecu, unos troškova u 22h
+
 #### Ostalo
 
 - Potvrda pre brisanja stavke, beleške, foldera ili stranice
@@ -147,7 +163,7 @@ Sve je lokalno, u ovom browseru:
 
 | Šta | Gde |
 | --- | --- |
-| Stavke, beleške, knowledge, aktivni tab, tema | `localStorage` |
+| Stavke, beleške, knowledge, finansije, aktivni tab, tema | `localStorage` |
 | Slike i video u knowledge | `IndexedDB` (`lifely-media`) |
 
 Nema sinhronizacije između uređaja. Drugi browser, drugi telefon ili brisanje podataka sajta = drugi (ili prazan) skup podataka. Nema backup-a van uređaja.
