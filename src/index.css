@@ -161,6 +161,12 @@ button {
   color: var(--ink-tertiary);
 }
 
+select.field {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.6rem;
+}
+
 .icon-btn {
   display: grid;
   place-items: center;

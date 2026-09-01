@@ -2,9 +2,10 @@ import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { DaySheet } from "@/components/DaySheet";
 import { ItemSheet } from "@/components/ItemSheet";
+import { useFinanceReminders } from "@/hooks/useFinanceReminders";
 import { tabTransition } from "@/lib/motion";
 import { CalendarScreen } from "@/screens/CalendarScreen";
-import { ComingSoonScreen } from "@/screens/ComingSoonScreen";
+import { FinancesScreen } from "@/screens/FinancesScreen";
 import { KnowledgeScreen } from "@/screens/KnowledgeScreen";
 import { NotesScreen } from "@/screens/NotesScreen";
 import { TodoScreen } from "@/screens/TodoScreen";
@@ -14,6 +15,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 export default function App() {
   const tab = useUiStore((state) => state.tab);
   const reduce = useReducedMotion();
+  useFinanceReminders();
 
   return (
     <AppShell>
@@ -30,12 +32,7 @@ export default function App() {
           {tab === "todo" && <TodoScreen />}
           {tab === "notes" && <NotesScreen />}
           {tab === "knowledge" && <KnowledgeScreen />}
-          {tab === "finances" && (
-            <ComingSoonScreen
-              title="Finansije"
-              message="Pregled finansija stiže uskoro."
-            />
-          )}
+          {tab === "finances" && <FinancesScreen />}
         </motion.div>
       </AnimatePresence>
       <DaySheet />

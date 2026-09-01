@@ -43,6 +43,10 @@ export function monthTitle(date: Date): string {
   return capitalize(format(date, "LLLL yyyy", { locale }));
 }
 
+export function monthName(date: Date): string {
+  return capitalize(format(date, "LLLL", { locale }));
+}
+
 export function fullDateTitle(date: Date): string {
   return capitalize(format(date, "EEEE, d. MMMM", { locale }));
 }

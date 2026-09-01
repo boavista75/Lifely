@@ -68,6 +68,44 @@ export function IconFinances(props: IconProps) {
   );
 }
 
+export function IconLock(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="5.5" y="11" width="13" height="10" rx="2" />
+      <path d="M8 11V8.2a4 4 0 0 1 8 0V11" />
+    </svg>
+  );
+}
+
+export function IconCard(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="6.5" width="18" height="12" rx="2.2" />
+      <path d="M3 10.5h18" />
+      <path d="M7 15h4" />
+    </svg>
+  );
+}
+
+export function IconCash(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3.5" y="6.5" width="17" height="11" rx="2" />
+      <circle cx="12" cy="12" r="2.2" />
+      <path d="M6.5 9.2v5.6M17.5 9.2v5.6" />
+    </svg>
+  );
+}
+
+export function IconBell(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M6.2 16.5h11.6l-1.1-1.8c-.4-.7-.7-1.5-.7-2.3V10a4.2 4.2 0 1 0-8.4 0v2.4c0 .8-.3 1.6-.7 2.3l-1.1 1.8Z" />
+      <path d="M10 16.5v.7a2 2 0 0 0 4 0v-.7" />
+    </svg>
+  );
+}
+
 export function IconChevron(props: IconProps) {
   return (
     <svg {...base(props)}>

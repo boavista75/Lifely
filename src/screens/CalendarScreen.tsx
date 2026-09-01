@@ -1,6 +1,5 @@
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { IconChevron } from "@/components/icons";
-import { cn } from "@/lib/cn";
 import {
   getMonthGrid,
   getWeekDays,
@@ -81,21 +80,14 @@ export function CalendarScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="shrink-0 px-4 pt-3 md:px-8 md:pt-8">
-        <div className="flex items-start justify-between gap-3 md:items-center">
-          <div className="min-w-0">
-            <h1 className="page-title flex min-h-11 items-center md:hidden">
-              Kalendar
-            </h1>
-            <p
-              className={cn(
-                "truncate font-display font-semibold leading-[0.95] tracking-[-0.03em] tabular",
-                "mt-2 text-[24px] md:mt-0 md:flex md:min-h-11 md:items-center md:text-[34px]",
-              )}
-            >
-              {title}
-            </p>
-          </div>
-          <div className="flex min-h-11 items-center gap-0.5">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="page-title flex min-h-11 min-w-0 items-center md:hidden">
+            Kalendar
+          </h1>
+          <p className="hidden min-w-0 font-display text-[34px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:flex md:min-h-11 md:items-center">
+            {title}
+          </p>
+          <div className="flex min-h-11 shrink-0 items-center gap-0.5">
             <IconButton label="Prethodni" onClick={() => go(-1)}>
               <IconChevron className="size-5" />
             </IconButton>
@@ -111,6 +103,9 @@ export function CalendarScreen() {
             </button>
           </div>
         </div>
+        <p className="mt-2 font-display text-[24px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:hidden">
+          {title}
+        </p>
         <div className="mt-4 mb-3 max-w-[280px]">
           <SegmentedControl
             value={view}
@@ -138,49 +133,37 @@ export function CalendarScreen() {
       )}
 
       <div className="relative min-h-0 flex-1 overflow-hidden md:px-4 md:pb-4">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={view}
-            className="h-full"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: -8 }}
-            transition={reduce ? { duration: 0.01 } : { duration: 0.16, ease: [0.32, 0.72, 0, 1] }}
+        {view === "month" ? (
+          <PeriodPane
+            key="month"
+            periodKey={periodKey}
+            direction={direction}
+            reduce={Boolean(reduce)}
           >
-            <div className="relative h-full overflow-hidden">
-              <AnimatePresence initial={false} custom={direction}>
-                <motion.div
-                  key={periodKey}
-                  custom={direction}
-                  variants={reduce ? fadeOnly : monthSlide}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={reduce ? { duration: 0.01 } : slideTransition}
-                  className="absolute inset-0"
-                >
-                  {view === "month" ? (
-                    <MonthGrid
-                      days={monthDays}
-                      cursor={cursor}
-                      selectedDate={selectedDate}
-                      itemsByDate={itemsByDate}
-                      onSelect={onSelectDay}
-                    />
-                  ) : (
-                    <WeekGrid
-                      days={weekDays}
-                      selectedDate={selectedDate}
-                      itemsByDate={itemsByDate}
-                      onSelectDay={onSelectDay}
-                      onOpenItem={openEditItem}
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            <MonthGrid
+              days={monthDays}
+              cursor={cursor}
+              selectedDate={selectedDate}
+              itemsByDate={itemsByDate}
+              onSelect={onSelectDay}
+            />
+          </PeriodPane>
+        ) : (
+          <PeriodPane
+            key="week"
+            periodKey={periodKey}
+            direction={direction}
+            reduce={Boolean(reduce)}
+          >
+            <WeekGrid
+              days={weekDays}
+              selectedDate={selectedDate}
+              itemsByDate={itemsByDate}
+              onSelectDay={onSelectDay}
+              onOpenItem={openEditItem}
+            />
+          </PeriodPane>
+        )}
       </div>
     </div>
   );
@@ -191,6 +174,35 @@ const fadeOnly = {
   center: { opacity: 1 },
   exit: { opacity: 0 },
 };
+
+function PeriodPane({
+  periodKey,
+  direction,
+  reduce,
+  children,
+}: {
+  periodKey: string;
+  direction: number;
+  reduce: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <AnimatePresence initial={false} custom={direction}>
+      <motion.div
+        key={periodKey}
+        custom={direction}
+        variants={reduce ? fadeOnly : monthSlide}
+        initial="enter"
+        animate="center"
+        exit="exit"
+        transition={reduce ? { duration: 0.01 } : slideTransition}
+        className="absolute inset-0"
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
 
 function groupByDate(items: LifelyItem[]): Map<string, LifelyItem[]> {
   const map = new Map<string, LifelyItem[]>();

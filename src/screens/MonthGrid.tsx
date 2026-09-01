@@ -144,7 +144,7 @@ export function WeekGrid({
   const openDay = useUiStore((state) => state.openDay);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-y-auto overscroll-contain px-3 pb-3 md:grid md:grid-cols-7 md:gap-1.5 md:overflow-hidden md:px-1.5 md:pb-1.5">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-3 pb-4 md:grid md:grid-cols-7 md:gap-1.5 md:overflow-hidden md:px-1.5 md:pb-1.5">
       {days.map((day) => {
         const key = toDateKey(day);
         const today = dayIsToday(day);
@@ -154,16 +154,16 @@ export function WeekGrid({
         return (
           <section
             key={key}
-            className="min-h-0 rounded-[20px] bg-surface/50 md:flex md:flex-col md:overflow-hidden"
+            className="shrink-0 rounded-[20px] bg-surface/70 md:flex md:min-h-0 md:flex-col md:overflow-hidden md:bg-surface/50"
           >
             <button
               type="button"
               onClick={() => onSelectDay(day)}
               aria-current={today ? "date" : undefined}
               aria-label={key}
-              className="flex min-h-11 w-full items-center gap-3 px-1 py-2 md:flex-col md:gap-1 md:pt-3"
+              className="flex min-h-11 w-full shrink-0 items-center gap-3 px-2 py-2 md:flex-col md:gap-1 md:px-1 md:pt-3"
             >
-              <span className="w-10 text-[12px] font-medium uppercase tracking-wide text-ink-secondary md:w-auto">
+              <span className="w-8 text-[12px] font-medium uppercase tracking-wide text-ink-secondary md:w-auto">
                 {weekdayLetter(day)}
               </span>
               <span
@@ -177,7 +177,7 @@ export function WeekGrid({
                 {day.getDate()}
               </span>
             </button>
-            <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-1 pb-2 md:px-1.5">
+            <div className="space-y-1.5 px-2 pb-2.5 md:min-h-0 md:flex-1 md:space-y-1 md:overflow-y-auto md:overscroll-contain md:px-1.5 md:pb-2">
               {dayItems.length === 0 ? (
                 <button
                   type="button"
@@ -187,12 +187,12 @@ export function WeekGrid({
                 />
               ) : (
                 dayItems.map((item) => (
-                  <div key={item.id} className="flex items-start">
+                  <div key={item.id} className="flex items-start gap-0.5">
                     <button
                       type="button"
                       onClick={() => onOpenItem(item.id)}
                       className={cn(
-                        "min-w-0 flex-1 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 md:px-1.5",
+                        "min-w-0 flex-1 rounded-xl px-2.5 py-2 text-left transition-colors duration-150 md:px-1.5 md:py-1.5",
                         item.completed
                           ? "text-ink-tertiary line-through"
                           : "bg-accent/12 text-accent",
@@ -203,7 +203,7 @@ export function WeekGrid({
                           {formatItemTime(item)}
                         </span>
                       )}
-                      <span className="block truncate text-[13px] font-medium leading-4 text-ink md:text-[12px]">
+                      <span className="block text-[14px] font-medium leading-5 text-ink wrap-break-word md:truncate md:text-[12px] md:leading-4">
                         {item.title}
                       </span>
                     </button>

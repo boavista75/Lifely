@@ -75,3 +75,51 @@ export interface LifelyKbFile {
 }
 
 export type LifelyKbNode = LifelyKbFolder | LifelyKbPage | LifelyKbFile;
+
+export type FinanceBucket = "needs" | "wants" | "savings";
+
+export type ExpenseCategory =
+  | "stanarina"
+  | "gorivo"
+  | "racuni"
+  | "nabavka"
+  | "kafic"
+  | "brza-hrana"
+  | "bioskop"
+  | "subskripcije"
+  | "soping";
+
+export interface FinanceSalary {
+  id: string;
+  month: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FinanceExpense {
+  id: string;
+  category: ExpenseCategory;
+  amount: number;
+  date: string;
+  createdAt: string;
+}
+
+export interface FinanceBonus {
+  id: string;
+  amount: number;
+  bucket: FinanceBucket;
+  date: string;
+  createdAt: string;
+}
+
+export interface FinanceData {
+  salaries: FinanceSalary[];
+  expenses: FinanceExpense[];
+  bonuses: FinanceBonus[];
+  confirmedLogDates: string[];
+  dismissedSalaryMonth: string | null;
+  dismissedExpenseDate: string | null;
+  salaryNotifiedMonth: string | null;
+  expenseNotifiedDate: string | null;
+}

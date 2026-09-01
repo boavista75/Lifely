@@ -1,11 +1,42 @@
+import { EMPTY_FINANCE_DATA } from "@/lib/finances";
 import { clampKbTextScale, KB_TEXT_SCALE_DEFAULT, isKbFile, isKbPage } from "@/lib/kb";
-import type { LifelyItem, LifelyKbNode, LifelyNote, TabId } from "@/types";
+import type {
+  ExpenseCategory,
+  FinanceBonus,
+  FinanceBucket,
+  FinanceData,
+  FinanceExpense,
+  FinanceSalary,
+  LifelyItem,
+  LifelyKbNode,
+  LifelyNote,
+  TabId,
+} from "@/types";
 
 const ITEMS_KEY = "lifely-items";
 const NOTES_KEY = "lifely-notes";
 const KB_KEY = "lifely-kb";
 const TAB_KEY = "lifely-tab";
 const THEME_KEY = "lifely-theme";
+const FINANCES_KEY = "lifely-finances";
+
+const BUCKETS: FinanceBucket[] = ["needs", "wants", "savings"];
+const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  "stanarina",
+  "gorivo",
+  "racuni",
+  "nabavka",
+  "kafic",
+  "brza-hrana",
+  "bioskop",
+  "subskripcije",
+  "soping",
+];
+
+const LEGACY_EXPENSE_CATEGORIES: Record<string, ExpenseCategory> = {
+  nabavke: "nabavka",
+  izlazci: "kafic",
+};
 
 const TABS: TabId[] = [
   "calendar",
@@ -225,5 +256,123 @@ export function applyTheme(theme: Theme): void {
   const meta = document.querySelector('meta[name="theme-color"]:not([media])');
   if (meta) {
     meta.setAttribute("content", theme === "dark" ? "#011638" : "#DFF8EB");
+  }
+}
+
+function isMonthKey(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}$/.test(value);
+}
+
+function isDateKey(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isPositiveAmount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function isSalary(value: unknown): value is FinanceSalary {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    isMonthKey(value.month) &&
+    isPositiveAmount(value.amount) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
+}
+
+function isExpense(value: unknown): value is FinanceExpense {
+  if (!isRecord(value)) return false;
+  const rawCategory =
+    typeof value.category === "string"
+      ? (LEGACY_EXPENSE_CATEGORIES[value.category] ?? value.category)
+      : null;
+  if (
+    !rawCategory ||
+    !EXPENSE_CATEGORIES.includes(rawCategory as ExpenseCategory)
+  ) {
+    return false;
+  }
+  if (
+    typeof value.id !== "string" ||
+    !isPositiveAmount(value.amount) ||
+    !isDateKey(value.date) ||
+    typeof value.createdAt !== "string"
+  ) {
+    return false;
+  }
+  value.category = rawCategory;
+  return true;
+}
+
+function isBonus(value: unknown): value is FinanceBonus {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    isPositiveAmount(value.amount) &&
+    typeof value.bucket === "string" &&
+    BUCKETS.includes(value.bucket as FinanceBucket) &&
+    isDateKey(value.date) &&
+    typeof value.createdAt === "string"
+  );
+}
+
+function uniqueByMonth(salaries: FinanceSalary[]): FinanceSalary[] {
+  const seen = new Map<string, FinanceSalary>();
+  for (const salary of salaries) seen.set(salary.month, salary);
+  return [...seen.values()];
+}
+
+export function loadFinances(): FinanceData {
+  if (typeof localStorage === "undefined") return EMPTY_FINANCE_DATA;
+  try {
+    const raw = localStorage.getItem(FINANCES_KEY);
+    if (!raw) return EMPTY_FINANCE_DATA;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed)) return EMPTY_FINANCE_DATA;
+    const salaries = Array.isArray(parsed.salaries)
+      ? uniqueByMonth(parsed.salaries.filter(isSalary))
+      : [];
+    const expenses = Array.isArray(parsed.expenses)
+      ? parsed.expenses.filter(isExpense)
+      : [];
+    const bonuses = Array.isArray(parsed.bonuses)
+      ? parsed.bonuses.filter(isBonus)
+      : [];
+    const confirmedLogDates = Array.isArray(parsed.confirmedLogDates)
+      ? parsed.confirmedLogDates.filter(
+          (value): value is string => isDateKey(value),
+        )
+      : [];
+    return {
+      salaries,
+      expenses,
+      bonuses,
+      confirmedLogDates: [...new Set(confirmedLogDates)],
+      dismissedSalaryMonth: isMonthKey(parsed.dismissedSalaryMonth)
+        ? parsed.dismissedSalaryMonth
+        : null,
+      dismissedExpenseDate: isDateKey(parsed.dismissedExpenseDate)
+        ? parsed.dismissedExpenseDate
+        : null,
+      salaryNotifiedMonth: isMonthKey(parsed.salaryNotifiedMonth)
+        ? parsed.salaryNotifiedMonth
+        : null,
+      expenseNotifiedDate: isDateKey(parsed.expenseNotifiedDate)
+        ? parsed.expenseNotifiedDate
+        : null,
+    };
+  } catch {
+    return EMPTY_FINANCE_DATA;
+  }
+}
+
+export function saveFinances(data: FinanceData): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(FINANCES_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore quota / private-mode failures.
   }
 }
