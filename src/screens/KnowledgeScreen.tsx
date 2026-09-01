@@ -1,6 +1,9 @@
+import { KbDownloadButton } from "@/components/KbDownloadButton";
+import { KbFileViewer } from "@/components/KbFileViewer";
+import { KbExplorer } from "@/components/KbExplorer";
 import { KbMediaControl } from "@/components/KbMediaControl";
 import { KbPageLinkControl } from "@/components/KbPageLinkControl";
-import { KbExplorer } from "@/components/KbExplorer";
+import { KbTextScaleControl } from "@/components/KbTextScaleControl";
 import { RichEditorToolbar } from "@/components/RichEditorToolbar";
 import { IconChevron, IconSearch } from "@/components/icons";
 import {
@@ -9,29 +12,110 @@ import {
   previewFindMatches,
 } from "@/lib/editor";
 import { MEDIA_ERROR_EVENT } from "@/lib/media";
-import { defaultPageTitle, isKbPage, pageIdFromHref } from "@/lib/kb";
+import {
+  defaultPageTitle,
+  isKbFile,
+  isKbPage,
+  KB_TEXT_SCALE_DEFAULT,
+  pageIdFromHref,
+} from "@/lib/kb";
+import { isEditorKbFileName, isOfficeKbFile, isPdfKbFile } from "@/lib/kbFiles";
 import { isBlankHtml, isDefaultNoteTitle } from "@/lib/notes";
 import { useItemsStore } from "@/store/useItemsStore";
 import { useKbStore } from "@/store/useKbStore";
 import { useUiStore } from "@/store/useUiStore";
-import type { LifelyKbPage } from "@/types";
+import type { LifelyKbFile, LifelyKbPage } from "@/types";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
+
+const KbOfficeViewer = lazy(() =>
+  import("@/components/KbOfficeViewer").then((mod) => ({
+    default: mod.KbOfficeViewer,
+  })),
+);
+const KbPdfEditor = lazy(() =>
+  import("@/components/KbPdfEditor").then((mod) => ({ default: mod.KbPdfEditor })),
+);
 
 export function KnowledgeScreen() {
   const nodes = useKbStore((state) => state.nodes);
+  const hydrateEditableFile = useKbStore((state) => state.hydrateEditableFile);
   const kbPageId = useUiStore((state) => state.kbPageId);
-  const page = nodes.find((node) => node.id === kbPageId && isKbPage(node));
+  const node = nodes.find((entry) => entry.id === kbPageId);
 
-  if (page) return <KbPageEditor key={page.id} pageId={page.id} />;
+  useEffect(() => {
+    if (
+      node &&
+      isKbFile(node) &&
+      isEditorKbFileName(node.title) &&
+      node.content === null
+    ) {
+      void hydrateEditableFile(node.id);
+    }
+  }, [hydrateEditableFile, node]);
+
+  if (node && isKbFile(node) && isEditorKbFileName(node.title)) {
+    if (node.content === null) {
+      return (
+        <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
+          Učitavanje…
+        </p>
+      );
+    }
+    return <KbPageEditor key={node.id} nodeId={node.id} />;
+  }
+  if (node && isKbFile(node) && isPdfKbFile(node)) {
+    return (
+      <Suspense
+        fallback={
+          <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
+            Učitavanje…
+          </p>
+        }
+      >
+        <KbPdfEditor key={node.id} fileId={node.id} />
+      </Suspense>
+    );
+  }
+  if (node && isKbFile(node) && isOfficeKbFile(node) && node.mediaId) {
+    return (
+      <Suspense
+        fallback={
+          <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
+            Učitavanje…
+          </p>
+        }
+      >
+        <KbOfficeViewer key={node.id} fileId={node.id} />
+      </Suspense>
+    );
+  }
+  if (
+    node &&
+    isKbFile(node) &&
+    isOfficeKbFile(node) &&
+    typeof node.content === "string"
+  ) {
+    return <KbPageEditor key={node.id} nodeId={node.id} />;
+  }
+  if (node && isKbFile(node)) {
+    return <KbFileViewer key={node.id} fileId={node.id} />;
+  }
+  if (node && isKbPage(node)) {
+    return <KbPageEditor key={node.id} nodeId={node.id} />;
+  }
   return <KbExplorer variant="page" />;
 }
 
-function KbPageEditor({ pageId }: { pageId: string }) {
+type EditableDoc = LifelyKbPage | (LifelyKbFile & { content: string });
+
+function KbPageEditor({ nodeId }: { nodeId: string }) {
   const nodes = useKbStore((state) => state.nodes);
-  const page = nodes.find(
-    (node): node is LifelyKbPage => node.id === pageId && isKbPage(node),
-  );
+  const page = nodes.find((entry): entry is EditableDoc => {
+    if (entry.id !== nodeId) return false;
+    if (isKbPage(entry)) return true;
+    return isKbFile(entry) && typeof entry.content === "string";
+  });
   const updateNode = useKbStore((state) => state.updateNode);
   const deleteNode = useKbStore((state) => state.deleteNode);
   const closeKbPage = useUiStore((state) => state.closeKbPage);
@@ -62,11 +146,11 @@ function KbPageEditor({ pageId }: { pageId: string }) {
       onUpdate: ({ editor: instance }) => {
         if (saveTimer.current) window.clearTimeout(saveTimer.current);
         saveTimer.current = window.setTimeout(() => {
-          updateRef.current(pageId, { content: instance.getHTML() });
+          updateRef.current(nodeId, { content: instance.getHTML() });
         }, 280);
       },
     },
-    [pageId],
+    [nodeId],
   );
   editorRef.current = editor;
 
@@ -106,13 +190,13 @@ function KbPageEditor({ pageId }: { pageId: string }) {
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest("a");
       const id = pageIdFromHref(anchor?.getAttribute("href"));
-      if (!id || id === pageId) return;
+      if (!id || id === nodeId) return;
       event.preventDefault();
       event.stopPropagation();
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
       const instance = editorRef.current;
       if (instance && !instance.isDestroyed) {
-        updateRef.current(pageId, { content: instance.getHTML() });
+        updateRef.current(nodeId, { content: instance.getHTML() });
       }
       const next = useKbStore
         .getState()
@@ -121,16 +205,16 @@ function KbPageEditor({ pageId }: { pageId: string }) {
     }
     dom.addEventListener("click", onClick);
     return () => dom.removeEventListener("click", onClick);
-  }, [editor, pageId]);
+  }, [editor, nodeId]);
 
   useEffect(() => {
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
       if (editor && !editor.isDestroyed) {
-        updateNode(pageId, { content: editor.getHTML() });
+        updateNode(nodeId, { content: editor.getHTML() });
       }
     };
-  }, [editor, pageId, updateNode]);
+  }, [editor, nodeId, updateNode]);
 
   if (!page) return null;
 
@@ -140,11 +224,16 @@ function KbPageEditor({ pageId }: { pageId: string }) {
       return;
     }
     const untitled =
-      !page.title.trim() || isDefaultNoteTitle(page.title, page.createdAt);
-    if (isBlankHtml(page.content) && untitled) {
+      isKbPage(page) &&
+      (!page.title.trim() || isDefaultNoteTitle(page.title, page.createdAt));
+    if (isKbPage(page) && isBlankHtml(page.content) && untitled) {
       deleteNode(page.id);
     } else if (!page.title.trim()) {
-      updateNode(page.id, { title: defaultPageTitle(new Date(page.createdAt)) });
+      updateNode(page.id, {
+        title: isKbPage(page)
+          ? defaultPageTitle(new Date(page.createdAt))
+          : page.title || "Fajl",
+      });
     }
     closeKbPage();
   }
@@ -160,13 +249,27 @@ function KbPageEditor({ pageId }: { pageId: string }) {
           <IconChevron className="size-5" />
           Knowledge
         </button>
-        <button
-          type="button"
-          onClick={() => requestDeleteKb("kb-page", page.id)}
-          className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
-        >
-          Obriši
-        </button>
+        <div className="flex shrink-0 items-center">
+          <KbDownloadButton
+            nodeId={page.id}
+            variant="label"
+            beforeDownload={() => {
+              if (saveTimer.current) window.clearTimeout(saveTimer.current);
+              if (editor && !editor.isDestroyed) {
+                updateNode(page.id, { content: editor.getHTML() });
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() =>
+              requestDeleteKb(isKbPage(page) ? "kb-page" : "kb-file", page.id)
+            }
+            className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
+          >
+            Obriši
+          </button>
+        </div>
       </header>
       <input
         value={page.title}
@@ -174,7 +277,9 @@ function KbPageEditor({ pageId }: { pageId: string }) {
         onBlur={() => {
           if (!page.title.trim()) {
             updateNode(page.id, {
-              title: defaultPageTitle(new Date(page.createdAt)),
+              title: isKbPage(page)
+                ? defaultPageTitle(new Date(page.createdAt))
+                : "Fajl",
             });
           }
         }}
@@ -186,6 +291,10 @@ function KbPageEditor({ pageId }: { pageId: string }) {
           editor={editor}
           extra={
             <>
+              <KbTextScaleControl
+                scale={page.textScale ?? KB_TEXT_SCALE_DEFAULT}
+                onChange={(textScale) => updateNode(page.id, { textScale })}
+              />
               <KbMediaControl editor={editor} />
               <KbPageLinkControl editor={editor} currentPageId={page.id} />
             </>
@@ -255,6 +364,13 @@ function KbPageEditor({ pageId }: { pageId: string }) {
       <div
         data-kb-page-scroll
         className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 md:px-8"
+        style={
+          {
+            "--note-text-scale": String(
+              page.textScale ?? KB_TEXT_SCALE_DEFAULT,
+            ),
+          } as CSSProperties
+        }
       >
         <EditorContent editor={editor} className="h-full min-h-[50%]" />
         <LinkedTodos pageId={page.id} />

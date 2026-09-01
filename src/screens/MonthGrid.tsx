@@ -49,10 +49,10 @@ export function MonthGrid({
               today && "bg-accent/10",
             )}
           >
-            <span className="flex justify-center md:justify-start">
+            <span className="flex shrink-0 items-center justify-center md:justify-between">
               <span
                 className={cn(
-                  "grid size-7 place-items-center rounded-full text-[13px] font-semibold tabular md:size-8 md:text-[15px]",
+                  "grid size-7 place-items-center rounded-full text-[13px] font-semibold tabular md:size-7 md:text-[14px]",
                   !inMonth && "text-ink-tertiary",
                   inMonth && !today && !selected && "text-ink",
                   selected && !today && "bg-ink/8 text-ink",
@@ -61,6 +61,11 @@ export function MonthGrid({
               >
                 {day.getDate()}
               </span>
+              {isDesktop && dayItems.length > 3 ? (
+                <span className="pr-0.5 text-[10px] font-semibold tabular leading-none text-ink-tertiary">
+                  +{dayItems.length - 3}
+                </span>
+              ) : null}
             </span>
             {isDesktop ? (
               <DesktopChips items={dayItems} />
@@ -77,30 +82,28 @@ export function MonthGrid({
 function DesktopChips({ items }: { items: LifelyItem[] }) {
   if (items.length === 0) return null;
   const visible = items.slice(0, 3);
-  const extra = items.length - visible.length;
 
   return (
-    <div className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden">
+    <div className="mt-1 flex min-h-0 flex-1 flex-col justify-start gap-1 overflow-hidden">
       {visible.map((item) => {
         const time = formatItemTime(item);
         return (
           <span
             key={item.id}
             className={cn(
-              "truncate rounded-lg px-1.5 py-[3px] text-[11px] leading-4",
+              "grid min-h-0 w-full max-h-5 flex-1 basis-0 place-items-center overflow-hidden rounded-md px-1",
               item.completed
-                ? "text-ink-tertiary line-through"
+                ? "bg-ink/6 text-ink-tertiary line-through"
                 : "bg-accent/12 text-accent",
             )}
           >
-            {time ? <span className="tabular">{time} </span> : null}
-            {item.title}
+            <span className="block w-full truncate text-center text-[10px] leading-none">
+              {time ? <span className="tabular">{time} </span> : null}
+              {item.title}
+            </span>
           </span>
         );
       })}
-      {extra > 0 && (
-        <span className="px-1.5 text-[10px] text-ink-tertiary">+{extra}</span>
-      )}
     </div>
   );
 }

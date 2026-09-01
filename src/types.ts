@@ -55,8 +55,23 @@ export interface LifelyKbPage {
   parentId: string | null;
   title: string;
   content: string;
+  textScale: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export type LifelyKbNode = LifelyKbFolder | LifelyKbPage;
+export interface LifelyKbFile {
+  id: string;
+  kind: "file";
+  parentId: string | null;
+  title: string;
+  mediaId: string;
+  mimeType: string;
+  size: number;
+  content: string | null;
+  textScale: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type LifelyKbNode = LifelyKbFolder | LifelyKbPage | LifelyKbFile;

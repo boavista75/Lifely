@@ -48,6 +48,20 @@ export async function saveMedia(blob: Blob): Promise<string> {
   return id;
 }
 
+export async function saveMediaMany(
+  entries: { id: string; blob: Blob }[],
+): Promise<void> {
+  if (entries.length === 0) return;
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    const store = tx.objectStore(STORE);
+    for (const entry of entries) store.put(entry.blob, entry.id);
+  });
+}
+
 export async function loadMedia(id: string): Promise<Blob | null> {
   const db = await openDb();
   return new Promise((resolve, reject) => {
@@ -55,6 +69,42 @@ export async function loadMedia(id: string): Promise<Blob | null> {
     const request = tx.objectStore(STORE).get(id);
     request.onsuccess = () => resolve((request.result as Blob | undefined) ?? null);
     request.onerror = () => reject(request.error);
+  });
+}
+
+export async function loadMediaMany(
+  ids: string[],
+): Promise<Map<string, Blob>> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  const result = new Map<string, Blob>();
+  if (unique.length === 0) return result;
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readonly");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    const store = tx.objectStore(STORE);
+    for (const id of unique) {
+      const request = store.get(id);
+      request.onsuccess = () => {
+        const blob = request.result as Blob | undefined;
+        if (blob) result.set(id, blob);
+      };
+    }
+  });
+  return result;
+}
+
+export async function deleteMedia(ids: string[]): Promise<void> {
+  const unique = [...new Set(ids.filter(Boolean))];
+  if (unique.length === 0) return;
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    const store = tx.objectStore(STORE);
+    for (const id of unique) store.delete(id);
   });
 }
 

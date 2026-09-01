@@ -11,7 +11,8 @@ export type ConfirmDelete =
   | { kind: "item"; id: string }
   | { kind: "note"; id: string }
   | { kind: "kb-page"; id: string }
-  | { kind: "kb-folder"; id: string };
+  | { kind: "kb-folder"; id: string }
+  | { kind: "kb-file"; id: string };
 
 type UiState = {
   tab: TabId;
@@ -28,7 +29,10 @@ type UiState = {
   confirmDelete: ConfirmDelete | null;
   requestDelete: (id: string) => void;
   requestDeleteNote: (id: string) => void;
-  requestDeleteKb: (kind: "kb-page" | "kb-folder", id: string) => void;
+  requestDeleteKb: (
+    kind: "kb-page" | "kb-folder" | "kb-file",
+    id: string,
+  ) => void;
   closeConfirm: () => void;
   activeNoteId: string | null;
   openNote: (id: string) => void;

@@ -1,3 +1,4 @@
+import { clampKbTextScale, KB_TEXT_SCALE_DEFAULT, isKbFile, isKbPage } from "@/lib/kb";
 import type { LifelyItem, LifelyKbNode, LifelyNote, TabId } from "@/types";
 
 const ITEMS_KEY = "lifely-items";
@@ -113,7 +114,41 @@ function isKbNode(value: unknown): value is LifelyKbNode {
     typeof value.updatedAt === "string";
   if (!base) return false;
   if (value.kind === "folder") return true;
-  return value.kind === "page" && typeof value.content === "string";
+  if (value.kind === "file") {
+    return (
+      typeof value.mediaId === "string" &&
+      typeof value.mimeType === "string" &&
+      typeof value.size === "number" &&
+      Number.isFinite(value.size) &&
+      (value.content === undefined ||
+        value.content === null ||
+        typeof value.content === "string") &&
+      (value.textScale === undefined ||
+        (typeof value.textScale === "number" && Number.isFinite(value.textScale)))
+    );
+  }
+  if (value.kind !== "page" || typeof value.content !== "string") return false;
+  return (
+    value.textScale === undefined ||
+    (typeof value.textScale === "number" && Number.isFinite(value.textScale))
+  );
+}
+
+function withTextScale(node: LifelyKbNode): LifelyKbNode {
+  if (isKbPage(node)) {
+    return {
+      ...node,
+      textScale: clampKbTextScale(node.textScale ?? KB_TEXT_SCALE_DEFAULT),
+    };
+  }
+  if (isKbFile(node)) {
+    return {
+      ...node,
+      content: node.content ?? null,
+      textScale: clampKbTextScale(node.textScale ?? KB_TEXT_SCALE_DEFAULT),
+    };
+  }
+  return node;
 }
 
 export function loadKb(): LifelyKbNode[] {
@@ -123,7 +158,7 @@ export function loadKb(): LifelyKbNode[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isKbNode);
+    return parsed.filter(isKbNode).map(withTextScale);
   } catch {
     return [];
   }

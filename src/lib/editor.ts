@@ -2,6 +2,7 @@ import { KbImage, KbMediaDrop, KbVideo } from "@/lib/kbMedia";
 import { Extension } from "@tiptap/core";
 import { Color, TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
+import { TaskItem, TaskList } from "@tiptap/extension-list";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
@@ -48,6 +49,41 @@ const KbFindHighlight = Extension.create({
   },
 });
 
+const TaskListPointerFix = Extension.create({
+  name: "taskListPointerFix",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          handleDOMEvents: {
+            mousedown(_view, event) {
+              const target = event.target;
+              if (!(target instanceof Element)) return false;
+              if (!target.closest("ul[data-type='taskList'] > li > label")) {
+                return false;
+              }
+              event.preventDefault();
+              return true;
+            },
+          },
+        },
+      }),
+    ];
+  },
+});
+
+const TASK_LIST = [
+  TaskList,
+  TaskItem.configure({
+    nested: true,
+    a11y: {
+      checkboxLabel: (_node, checked) =>
+        checked ? "Završeno" : "Nije završeno",
+    },
+  }),
+  TaskListPointerFix,
+];
+
 export const NOTE_EXTENSIONS = [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
@@ -57,6 +93,7 @@ export const NOTE_EXTENSIONS = [
   Color,
   Highlight.configure({ multicolor: true }),
   PLACEHOLDER,
+  ...TASK_LIST,
 ];
 
 export const KB_EXTENSIONS = [
@@ -80,6 +117,7 @@ export const KB_EXTENSIONS = [
   Color,
   Highlight.configure({ multicolor: true }),
   PLACEHOLDER,
+  ...TASK_LIST,
   KbImage,
   KbVideo,
   KbMediaDrop,

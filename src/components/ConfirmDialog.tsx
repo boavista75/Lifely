@@ -34,14 +34,17 @@ export function ConfirmDialog() {
       ? notes.find((entry) => entry.id === confirmDelete.id)
       : undefined;
   const kbNode =
-    confirmDelete?.kind === "kb-page" || confirmDelete?.kind === "kb-folder"
+    confirmDelete?.kind === "kb-page" ||
+    confirmDelete?.kind === "kb-folder" ||
+    confirmDelete?.kind === "kb-file"
       ? kbNodes.find((entry) => entry.id === confirmDelete.id)
       : undefined;
   const open = Boolean(
     (confirmDelete?.kind === "item" && item) ||
       (confirmDelete?.kind === "note" && note) ||
       ((confirmDelete?.kind === "kb-page" ||
-        confirmDelete?.kind === "kb-folder") &&
+        confirmDelete?.kind === "kb-folder" ||
+        confirmDelete?.kind === "kb-file") &&
         kbNode),
   );
 
@@ -78,17 +81,23 @@ export function ConfirmDialog() {
         ? "Obrisati stranicu?"
         : confirmDelete?.kind === "kb-folder"
           ? "Obrisati folder?"
-          : "Obrisati stavku?";
+          : confirmDelete?.kind === "kb-file"
+            ? "Obrisati fajl?"
+            : "Obrisati stavku?";
   const name =
     confirmDelete?.kind === "note"
       ? displayNoteTitle(note?.title ?? "", note?.createdAt)
-      : confirmDelete?.kind === "kb-page" || confirmDelete?.kind === "kb-folder"
+      : confirmDelete?.kind === "kb-page" ||
+          confirmDelete?.kind === "kb-folder" ||
+          confirmDelete?.kind === "kb-file"
         ? displayKbTitle(kbNode?.title ?? "", kbNode?.createdAt)
         : (item?.title ?? "");
   const body =
     confirmDelete?.kind === "kb-folder"
       ? `„${name}“ i sav sadržaj unutra će biti uklonjeni.`
-      : `„${name}“ će biti uklonjena.`;
+      : confirmDelete?.kind === "kb-file"
+        ? `„${name}“ će biti uklonjen.`
+        : `„${name}“ će biti uklonjena.`;
 
   return (
     <AnimatePresence>

@@ -1,38 +1,80 @@
 import {
   IconChevron,
   IconClose,
+  IconFile,
   IconFolder,
+  IconMove,
   IconPage,
   IconPlus,
   IconSearch,
 } from "@/components/icons";
+import { KbDownloadButton } from "@/components/KbDownloadButton";
+import { KbMoveSheet } from "@/components/KbMoveSheet";
+import { KbUploadButton, useKbUpload } from "@/components/KbUploadButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { cn } from "@/lib/cn";
 import {
+  canMoveKbNode,
   childrenOf,
   descendantIds,
   displayKbTitle,
   folderPath,
+  isKbFile,
   isKbFolder,
   isKbPage,
+  searchKbFiles,
   searchKbPages,
 } from "@/lib/kb";
+import { MEDIA_ERROR_EVENT } from "@/lib/media";
 import { useKbExplorerStore } from "@/store/useKbExplorerStore";
 import { useKbStore } from "@/store/useKbStore";
 import { useUiStore } from "@/store/useUiStore";
-import type { LifelyKbFolder, LifelyKbPage } from "@/types";
-import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
+import type { LifelyKbFile, LifelyKbFolder, LifelyKbPage } from "@/types";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 
 type AddMenu =
   | { kind: "header" }
   | { kind: "folder"; id: string }
   | null;
 
+type DropTarget = "root" | string | null;
+
+type KbMoveUi = {
+  draggingId: string | null;
+  dropTarget: DropTarget;
+  ignoreClick: () => boolean;
+  requestMove: (id: string) => void;
+  onDragStart: (id: string, event: DragEvent) => void;
+  onDragEnd: () => void;
+  onDragOver: (target: "root" | string, event: DragEvent) => void;
+  onDrop: (target: "root" | string, event: DragEvent) => void;
+};
+
+const KbMoveUiContext = createContext<KbMoveUi | null>(null);
+
+function useKbMoveUi(): KbMoveUi {
+  const value = useContext(KbMoveUiContext);
+  if (!value) {
+    throw new Error("KbMoveUiContext missing");
+  }
+  return value;
+}
+
 export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
   const compact = variant === "sidebar";
   const nodes = useKbStore((state) => state.nodes);
   const addFolder = useKbStore((state) => state.addFolder);
   const addPage = useKbStore((state) => state.addPage);
+  const moveNode = useKbStore((state) => state.moveNode);
   const openKbPage = useUiStore((state) => state.openKbPage);
   const kbPageId = useUiStore((state) => state.kbPageId);
   const query = useKbExplorerStore((state) => state.query);
@@ -44,8 +86,15 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
   );
   const expandFolders = useKbExplorerStore((state) => state.expandFolders);
   const collapseFolders = useKbExplorerStore((state) => state.collapseFolders);
+  const upload = useKbUpload((ids) => expandFolders(ids));
   const [menu, setMenu] = useState<AddMenu>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const draggingIdRef = useRef<string | null>(null);
+  const ignoreClickRef = useRef(false);
   const rootItems = childrenOf(nodes, null);
   const createParent = nodes.find(
     (node) => node.id === createParentId && isKbFolder(node),
@@ -66,9 +115,12 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
 
   useEffect(() => {
     if (!kbPageId) return;
-    const page = nodes.find((node) => node.id === kbPageId && isKbPage(node));
-    if (!page) return;
-    expandFolders(folderPath(nodes, page.parentId).map((folder) => folder.id));
+    const leaf = nodes.find(
+      (node) =>
+        node.id === kbPageId && (isKbPage(node) || isKbFile(node)),
+    );
+    if (!leaf) return;
+    expandFolders(folderPath(nodes, leaf.parentId).map((folder) => folder.id));
   }, [expandFolders, kbPageId, nodes]);
 
   useEffect(() => {
@@ -77,6 +129,21 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
       ?.querySelector("[data-kb-active-page]")
       ?.scrollIntoView({ block: "nearest" });
   }, [compact, kbPageId]);
+
+  useEffect(() => {
+    function onError(event: Event) {
+      const message = (event as CustomEvent<string>).detail;
+      if (message) setActionMessage(message);
+    }
+    window.addEventListener(MEDIA_ERROR_EVENT, onError);
+    return () => window.removeEventListener(MEDIA_ERROR_EVENT, onError);
+  }, []);
+
+  useEffect(() => {
+    if (!actionMessage) return;
+    const timer = window.setTimeout(() => setActionMessage(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [actionMessage]);
 
   function toggleFolder(id: string) {
     const folder = nodes.find((node) => node.id === id && isKbFolder(node));
@@ -115,6 +182,82 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
     setCreateParentId(folder.id);
   }
 
+  function relocate(id: string, parentId: string | null) {
+    if (!moveNode(id, parentId)) return;
+    if (parentId) {
+      expandFolders(
+        folderPath(useKbStore.getState().nodes, parentId).map(
+          (folder) => folder.id,
+        ),
+      );
+      setCreateParentId(parentId);
+    } else {
+      setCreateParentId(null);
+    }
+    if (kbPageId === id) openKbPage(id, parentId);
+  }
+
+  const moveUi: KbMoveUi = {
+    draggingId,
+    dropTarget,
+    ignoreClick: () => ignoreClickRef.current,
+    requestMove: (id) => {
+      setMenu(null);
+      setMovingId(id);
+    },
+    onDragStart: (id, event) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, .kb-hover-actions")) {
+        event.preventDefault();
+        return;
+      }
+      event.dataTransfer.setData("application/x-lifely-kb-node", id);
+      event.dataTransfer.setData("text/plain", id);
+      event.dataTransfer.effectAllowed = "move";
+      ignoreClickRef.current = true;
+      draggingIdRef.current = id;
+      setDraggingId(id);
+      setDropTarget(null);
+    },
+    onDragEnd: () => {
+      draggingIdRef.current = null;
+      setDraggingId(null);
+      setDropTarget(null);
+      window.setTimeout(() => {
+        ignoreClickRef.current = false;
+      }, 50);
+    },
+    onDragOver: (target, event) => {
+      const id = draggingIdRef.current;
+      if (!id) return;
+      event.stopPropagation();
+      const parentId = target === "root" ? null : target;
+      if (!canMoveKbNode(useKbStore.getState().nodes, id, parentId)) {
+        setDropTarget((current) => (current === null ? current : null));
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setDropTarget((current) => (current === target ? current : target));
+    },
+    onDrop: (target, event) => {
+      const id = draggingIdRef.current;
+      if (!id) return;
+      event.preventDefault();
+      event.stopPropagation();
+      relocate(id, target === "root" ? null : target);
+      draggingIdRef.current = null;
+      setDraggingId(null);
+      setDropTarget(null);
+    },
+  };
+
+  function onListDragLeave(event: DragEvent<HTMLDivElement>) {
+    const related = event.relatedTarget as Node | null;
+    if (related && event.currentTarget.contains(related)) return;
+    setDropTarget(null);
+  }
+
   const tree = searching ? (
     <KbSearchHits query={query} compact={compact} />
   ) : rootItems.length === 0 ? (
@@ -124,7 +267,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
         compact ? "px-2 py-8 text-[13px]" : "px-3 py-20 text-[15px]",
       )}
     >
-      Nema stranica. Dodaj folder ili stranicu dugmetom +
+        Nema stranica. Dodaj folder, stranicu ili otpremi fajlove
     </p>
   ) : (
     <KbTree
@@ -214,44 +357,98 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
     </div>
   );
 
+  const headerActions = (
+    <div className="flex shrink-0 items-center gap-0.5">
+      <KbUploadButton
+        compact={compact}
+        busy={upload.busy}
+        onOpen={() => upload.pick(createParentId)}
+      />
+      {addButton}
+    </div>
+  );
+
+  const moveSheet = (
+    <KbMoveSheet
+      nodeId={movingId}
+      onClose={() => setMovingId(null)}
+      onMove={(parentId) => {
+        if (movingId) relocate(movingId, parentId);
+        setMovingId(null);
+      }}
+    />
+  );
+
   if (compact) {
     return (
-      <div
-        className="mt-4 flex min-h-0 flex-1 flex-col border-t border-hairline pt-4"
-        aria-label="Knowledge stranice"
-      >
-        <div className="flex shrink-0 items-center gap-1.5 px-0.5">
-          <div className="min-w-0 flex-1">{searchField}</div>
-          {addButton}
-        </div>
+      <KbMoveUiContext.Provider value={moveUi}>
         <div
-          ref={listRef}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-0.5 pb-4 pt-2"
+          className="mt-4 flex min-h-0 flex-1 flex-col border-t border-hairline pt-4"
+          aria-label="Knowledge stranice"
         >
-          {tree}
+          <div className="flex shrink-0 items-center gap-1.5 px-0.5">
+            <div className="min-w-0 flex-1">{searchField}</div>
+            {headerActions}
+          </div>
+          <div
+            ref={listRef}
+            onDragOver={(event) => moveUi.onDragOver("root", event)}
+            onDrop={(event) => moveUi.onDrop("root", event)}
+            onDragLeave={onListDragLeave}
+            className={cn(
+              "min-h-0 flex-1 overflow-y-auto overscroll-contain px-0.5 pb-4 pt-2",
+              dropTarget === "root" && "kb-drop-root",
+            )}
+          >
+            {tree}
+          </div>
+          {actionMessage ? (
+            <p className="shrink-0 px-1 pb-2 text-[13px] text-danger">
+              {actionMessage}
+            </p>
+          ) : null}
+          {upload.dialog}
+          {moveSheet}
         </div>
-      </div>
+      </KbMoveUiContext.Provider>
     );
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <ScreenHeader
-        title="Knowledge"
-        subtitle={
-          createParent ? (
-            <p className="mt-2 truncate text-[13px] text-ink-secondary">
-              Novo se dodaje u: {displayKbTitle(createParent.title)}
-            </p>
-          ) : null
-        }
-        actions={addButton}
-      />
-      <div className="shrink-0 px-3 pb-1 md:px-6">{searchField}</div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 pt-3 md:px-6">
-        {tree}
+    <KbMoveUiContext.Provider value={moveUi}>
+      <div className="flex h-full min-h-0 flex-col">
+        <ScreenHeader
+          title="Knowledge"
+          subtitle={
+            createParent ? (
+              <p className="mt-2 truncate text-[13px] text-ink-secondary">
+                Novo se dodaje u: {displayKbTitle(createParent.title)}
+              </p>
+            ) : null
+          }
+          actions={headerActions}
+        />
+        <div className="shrink-0 px-3 pb-1 md:px-6">{searchField}</div>
+        <div
+          onDragOver={(event) => moveUi.onDragOver("root", event)}
+          onDrop={(event) => moveUi.onDrop("root", event)}
+          onDragLeave={onListDragLeave}
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 pt-3 md:px-6",
+            dropTarget === "root" && "kb-drop-root",
+          )}
+        >
+          {tree}
+        </div>
+        {actionMessage ? (
+          <p className="shrink-0 px-3 pb-3 text-[13px] text-danger md:px-6">
+            {actionMessage}
+          </p>
+        ) : null}
+        {upload.dialog}
+        {moveSheet}
       </div>
-    </div>
+    </KbMoveUiContext.Provider>
   );
 }
 
@@ -293,6 +490,18 @@ function KbTree({
               ancestorsLast={ancestorsLast}
               isLast={isLast}
               {...handlers}
+            />
+          );
+        }
+        if (isKbFile(item)) {
+          return (
+            <KbFileNode
+              key={item.id}
+              node={item}
+              depth={depth}
+              ancestorsLast={ancestorsLast}
+              isLast={isLast}
+              compact={handlers.compact}
             />
           );
         }
@@ -339,6 +548,16 @@ function KbFolderNode({
   const open = expanded.has(node.id);
   const selected = createParentId === node.id;
   const menuOpen = menu?.kind === "folder" && menu.id === node.id;
+  const expandFolders = useKbExplorerStore((state) => state.expandFolders);
+  const moveUi = useKbMoveUi();
+  const dropping = moveUi.dropTarget === node.id;
+
+  useEffect(() => {
+    if (!dropping || open) return;
+    const timer = window.setTimeout(() => expandFolders([node.id]), 550);
+    return () => window.clearTimeout(timer);
+  }, [dropping, expandFolders, node.id, open]);
+
   return (
     <div>
       <TreeRow
@@ -347,6 +566,8 @@ function KbFolderNode({
         isLast={isLast}
         compact={compact}
         active={selected && !compact}
+        dragId={node.id}
+        dropId={node.id}
         onClick={() => onSelectFolder(node.id)}
       >
         <button
@@ -388,6 +609,7 @@ function KbFolderNode({
         <input
           value={node.title}
           aria-label="Naziv foldera"
+          draggable={false}
           onFocus={() => onSelectFolder(node.id)}
           onChange={(event) =>
             updateNode(node.id, { title: event.target.value })
@@ -442,6 +664,22 @@ function KbFolderNode({
           ) : null}
           <button
             type="button"
+            aria-label="Premesti folder"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelectFolder(node.id);
+              moveUi.requestMove(node.id);
+            }}
+            className={cn(
+              "grid place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-ink",
+              compact ? "size-7" : "size-8",
+            )}
+          >
+            <IconMove className={compact ? "size-3.5" : "size-4"} />
+          </button>
+          <KbDownloadButton nodeId={node.id} compact={compact} />
+          <button
+            type="button"
             aria-label="Obriši folder"
             onClick={(event) => {
               event.stopPropagation();
@@ -457,20 +695,26 @@ function KbFolderNode({
         </div>
       </TreeRow>
       {open ? (
-        <KbTree
-          parentId={node.id}
-          depth={depth + 1}
-          ancestorsLast={depth === 0 ? [] : [...ancestorsLast, isLast]}
-          compact={compact}
-          expanded={expanded}
-          createParentId={createParentId}
-          menu={menu}
-          onToggleFolder={onToggleFolder}
-          onSelectFolder={onSelectFolder}
-          onOpenMenu={onOpenMenu}
-          onAddPage={onAddPage}
-          onAddFolder={onAddFolder}
-        />
+        <div
+          onDragOver={(event) => moveUi.onDragOver(node.id, event)}
+          onDrop={(event) => moveUi.onDrop(node.id, event)}
+          className={cn(dropping && "kb-drop-branch")}
+        >
+          <KbTree
+            parentId={node.id}
+            depth={depth + 1}
+            ancestorsLast={depth === 0 ? [] : [...ancestorsLast, isLast]}
+            compact={compact}
+            expanded={expanded}
+            createParentId={createParentId}
+            menu={menu}
+            onToggleFolder={onToggleFolder}
+            onSelectFolder={onSelectFolder}
+            onOpenMenu={onOpenMenu}
+            onAddPage={onAddPage}
+            onAddFolder={onAddFolder}
+          />
+        </div>
       ) : null}
     </div>
   );
@@ -495,6 +739,7 @@ function KbPageNode({
     (state) => state.setCreateParentId,
   );
   const requestDeleteKb = useUiStore((state) => state.requestDeleteKb);
+  const moveUi = useKbMoveUi();
   const title = displayKbTitle(node.title, node.createdAt);
   const active = kbPageId === node.id;
 
@@ -511,6 +756,7 @@ function KbPageNode({
       isLast={isLast}
       compact={compact}
       active={active}
+      dragId={node.id}
       onClick={openPage}
     >
       <span className={cn("shrink-0", compact ? "size-6" : "size-7")} />
@@ -537,20 +783,134 @@ function KbPageNode({
       >
         {title}
       </span>
-      <button
-        type="button"
-        aria-label="Obriši stranicu"
-        onClick={(event) => {
-          event.stopPropagation();
-          requestDeleteKb("kb-page", node.id);
-        }}
+      <div className="kb-hover-actions items-center pr-0.5">
+        <button
+          type="button"
+          aria-label="Premesti stranicu"
+          onClick={(event) => {
+            event.stopPropagation();
+            moveUi.requestMove(node.id);
+          }}
+          className={cn(
+            "grid place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-ink",
+            compact ? "size-7" : "size-8",
+          )}
+        >
+            <IconMove className={compact ? "size-3.5" : "size-4"} />
+          </button>
+          <KbDownloadButton nodeId={node.id} compact={compact} />
+          <button
+            type="button"
+            aria-label="Obriši stranicu"
+          onClick={(event) => {
+            event.stopPropagation();
+            requestDeleteKb("kb-page", node.id);
+          }}
+          className={cn(
+            "grid place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-danger",
+            compact ? "size-7" : "size-8",
+          )}
+        >
+          <IconClose className={compact ? "size-3.5" : "size-4"} />
+        </button>
+      </div>
+    </TreeRow>
+  );
+}
+
+function KbFileNode({
+  node,
+  depth,
+  ancestorsLast,
+  isLast,
+  compact,
+}: {
+  node: LifelyKbFile;
+  depth: number;
+  ancestorsLast: boolean[];
+  isLast: boolean;
+  compact: boolean;
+}) {
+  const openKbPage = useUiStore((state) => state.openKbPage);
+  const kbPageId = useUiStore((state) => state.kbPageId);
+  const setCreateParentId = useKbExplorerStore(
+    (state) => state.setCreateParentId,
+  );
+  const requestDeleteKb = useUiStore((state) => state.requestDeleteKb);
+  const moveUi = useKbMoveUi();
+  const active = kbPageId === node.id;
+
+  function openFile() {
+    setCreateParentId(node.parentId);
+    openKbPage(node.id, node.parentId);
+  }
+
+  return (
+    <TreeRow
+      data-kb-active-page={active ? "true" : undefined}
+      depth={depth}
+      ancestorsLast={ancestorsLast}
+      isLast={isLast}
+      compact={compact}
+      active={active}
+      dragId={node.id}
+      onClick={openFile}
+    >
+      <span className={cn("shrink-0", compact ? "size-6" : "size-7")} />
+      <span
         className={cn(
-          "kb-hover-delete mr-0.5 grid shrink-0 place-items-center rounded-md text-ink-tertiary hover:text-danger",
-          compact ? "size-7" : "size-8",
+          "grid shrink-0 place-items-center",
+          compact ? "size-6" : "size-7",
         )}
       >
-        <IconClose className={compact ? "size-3.5" : "size-4"} />
-      </button>
+        <IconFile
+          className={cn(
+            "text-ink-secondary",
+            compact ? "size-4" : "size-[18px]",
+          )}
+        />
+      </span>
+      <span
+        title={node.title}
+        className={cn(
+          "min-w-0 flex-1 truncate text-left",
+          compact ? "px-1 text-[13px]" : "px-1.5 text-[15px]",
+          active && "font-medium text-accent",
+        )}
+      >
+        {node.title}
+      </span>
+      <div className="kb-hover-actions items-center pr-0.5">
+        <button
+          type="button"
+          aria-label="Premesti fajl"
+          onClick={(event) => {
+            event.stopPropagation();
+            moveUi.requestMove(node.id);
+          }}
+          className={cn(
+            "grid place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-ink",
+            compact ? "size-7" : "size-8",
+          )}
+        >
+            <IconMove className={compact ? "size-3.5" : "size-4"} />
+          </button>
+          <KbDownloadButton nodeId={node.id} compact={compact} />
+          <button
+            type="button"
+            aria-label="Obriši fajl"
+          onClick={(event) => {
+            event.stopPropagation();
+            requestDeleteKb("kb-file", node.id);
+          }}
+          className={cn(
+            "grid place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-danger",
+            compact ? "size-7" : "size-8",
+          )}
+        >
+          <IconClose className={compact ? "size-3.5" : "size-4"} />
+        </button>
+      </div>
     </TreeRow>
   );
 }
@@ -564,10 +924,16 @@ function KbSearchHits({
 }) {
   const nodes = useKbStore((state) => state.nodes);
   const pages = searchKbPages(nodes, query);
+  const files = searchKbFiles(nodes, query);
+  const hits = [
+    ...files.map((file) => ({ kind: "file" as const, node: file })),
+    ...pages.map((page) => ({ kind: "page" as const, node: page })),
+  ];
   const openKbPage = useUiStore((state) => state.openKbPage);
   const kbPageId = useUiStore((state) => state.kbPageId);
+  const moveUi = useKbMoveUi();
 
-  if (pages.length === 0) {
+  if (hits.length === 0) {
     return (
       <p
         className={cn(
@@ -582,41 +948,69 @@ function KbSearchHits({
 
   return (
     <div>
-      {pages.map((page) => {
-        const title = displayKbTitle(page.title, page.createdAt);
-        const path = folderPath(nodes, page.parentId)
+      {hits.map(({ kind, node }) => {
+        const title =
+          kind === "page"
+            ? displayKbTitle(node.title, node.createdAt)
+            : node.title;
+        const path = folderPath(nodes, node.parentId)
           .map((folder) => displayKbTitle(folder.title))
           .join(" / ");
-        const active = kbPageId === page.id;
+        const active = kbPageId === node.id;
         return (
-          <button
-            key={page.id}
-            type="button"
-            data-kb-active-page={active ? "true" : undefined}
-            onClick={() => openKbPage(page.id, page.parentId)}
+          <div
+            key={node.id}
             className={cn(
-              "flex w-full flex-col justify-center px-2 text-left transition-colors duration-150",
+              "group flex w-full items-center gap-1 px-1 text-left transition-colors duration-150",
               compact ? "min-h-9 rounded-md py-1" : "min-h-11 rounded-lg py-1.5",
               active
                 ? "bg-accent/10 font-medium shadow-[inset_2px_0_0_0_var(--accent)]"
                 : "hover:bg-ink/[0.055]",
             )}
           >
-            <span
-              className={cn(
-                "truncate",
-                compact ? "text-[13px]" : "text-[15px]",
-                active && "font-medium text-accent",
-              )}
+            <button
+              type="button"
+              data-kb-active-page={active ? "true" : undefined}
+              onClick={() => openKbPage(node.id, node.parentId)}
+              className="flex min-w-0 flex-1 flex-col justify-center px-1 text-left"
             >
-              {title}
-            </span>
-            {path ? (
-              <span className="truncate text-[11px] text-ink-tertiary">
-                {path}
+              <span className="flex min-w-0 items-center gap-1.5">
+                {kind === "file" ? (
+                  <IconFile className="size-3.5 shrink-0 text-ink-tertiary" />
+                ) : null}
+                <span
+                  className={cn(
+                    "truncate",
+                    compact ? "text-[13px]" : "text-[15px]",
+                    active && "font-medium text-accent",
+                  )}
+                >
+                  {title}
+                </span>
               </span>
-            ) : null}
-          </button>
+              {path ? (
+                <span className="truncate text-[11px] text-ink-tertiary">
+                  {path}
+                </span>
+              ) : null}
+            </button>
+            <div className="kb-hover-actions items-center">
+              <button
+                type="button"
+                aria-label={
+                  kind === "file" ? "Premesti fajl" : "Premesti stranicu"
+                }
+                onClick={() => moveUi.requestMove(node.id)}
+                className={cn(
+                  "grid shrink-0 place-items-center rounded-md text-ink-tertiary hover:bg-surface-2 hover:text-ink",
+                  compact ? "size-7" : "size-8",
+                )}
+              >
+                <IconMove className={compact ? "size-3.5" : "size-4"} />
+              </button>
+              <KbDownloadButton nodeId={node.id} compact={compact} />
+            </div>
+          </div>
         );
       })}
     </div>
@@ -629,8 +1023,11 @@ function TreeRow({
   isLast,
   compact,
   active = false,
+  dragId,
+  dropId,
   children,
   className,
+  onClick,
   ...attrs
 }: {
   depth: number;
@@ -638,13 +1035,40 @@ function TreeRow({
   isLast: boolean;
   compact: boolean;
   active?: boolean;
+  dragId?: string;
+  dropId?: string;
   children: ReactNode;
   className?: string;
 } & Omit<HTMLAttributes<HTMLDivElement>, "children">) {
+  const moveUi = useKbMoveUi();
+  const dragging = Boolean(dragId) && moveUi.draggingId === dragId;
+  const dropping = Boolean(dropId) && moveUi.dropTarget === dropId;
+
   return (
     <div
-      className={cn("flex items-stretch", compact ? "h-9" : "h-11")}
+      className={cn(
+        "flex items-stretch",
+        compact ? "h-9" : "h-11",
+        dragging && "opacity-50",
+      )}
+      draggable={Boolean(dragId)}
       {...attrs}
+      onDragStart={
+        dragId ? (event) => moveUi.onDragStart(dragId, event) : undefined
+      }
+      onDragEnd={dragId ? moveUi.onDragEnd : undefined}
+      onDragOver={
+        dropId ? (event) => moveUi.onDragOver(dropId, event) : undefined
+      }
+      onDrop={dropId ? (event) => moveUi.onDrop(dropId, event) : undefined}
+      onClick={(event) => {
+        if (moveUi.ignoreClick()) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        onClick?.(event);
+      }}
     >
       <TreeGutter
         depth={depth}
@@ -656,9 +1080,11 @@ function TreeRow({
         className={cn(
           "group flex min-w-0 flex-1 cursor-pointer items-center transition-colors duration-150",
           compact ? "rounded-md" : "rounded-lg",
-          active
-            ? "bg-accent/10 shadow-[inset_2px_0_0_0_var(--accent)]"
-            : "hover:bg-ink/[0.055]",
+          dropping
+            ? "kb-drop-target"
+            : active
+              ? "bg-accent/10 shadow-[inset_2px_0_0_0_var(--accent)]"
+              : "hover:bg-ink/[0.055]",
           className,
         )}
       >

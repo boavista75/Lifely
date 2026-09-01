@@ -3,6 +3,9 @@ import { cn } from "@/lib/cn";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
+export const TOOL_BUTTON_CLASS =
+  "grid h-9 min-w-9 shrink-0 place-items-center rounded-lg px-1.5 text-[13px] font-semibold md:h-11 md:min-w-11 md:px-2";
+
 export function RichEditorToolbar({
   editor,
   extra,
@@ -12,7 +15,7 @@ export function RichEditorToolbar({
 }) {
   return (
     <div className="shrink-0 px-3 pb-2 md:px-6">
-      <div className="flex gap-0.5 overflow-x-auto no-scrollbar rounded-2xl bg-surface-2/90 p-1">
+      <div className="flex flex-wrap content-start gap-0.5 rounded-2xl bg-surface-2/90 p-1">
         <ToolButton
           label="Naslov 1"
           active={editor.isActive("heading", { level: 1 })}
@@ -99,6 +102,32 @@ export function RichEditorToolbar({
         >
           <span className="text-[12px] tracking-tight">1.</span>
         </ToolButton>
+        <ToolButton
+          label="Lista sa kvačicama"
+          active={editor.isActive("taskList")}
+          onClick={() => editor.chain().focus().toggleTaskList().run()}
+        >
+          <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
+            <rect
+              x="2.2"
+              y="2.2"
+              width="11.6"
+              height="11.6"
+              rx="2.2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+            />
+            <path
+              d="M4.6 8.1 6.7 10.2 11.4 5.6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </ToolButton>
         {extra}
       </div>
     </div>
@@ -108,11 +137,13 @@ export function RichEditorToolbar({
 export function ToolButton({
   label,
   active,
+  disabled,
   onClick,
   children,
 }: {
   label: string;
   active?: boolean;
+  disabled?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -121,11 +152,13 @@ export function ToolButton({
       type="button"
       aria-label={label}
       aria-pressed={active}
+      disabled={disabled}
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={cn(
-        "grid h-11 min-w-11 shrink-0 place-items-center rounded-lg px-2 text-[13px] font-semibold",
+        TOOL_BUTTON_CLASS,
         active ? "bg-surface text-accent shadow-sm" : "text-ink-secondary",
+        disabled && "opacity-35",
       )}
     >
       {children}
@@ -197,7 +230,7 @@ function ColorMenu({
         onMouseDown={(event) => event.preventDefault()}
         onClick={toggle}
         className={cn(
-          "grid h-11 min-w-11 shrink-0 place-items-center rounded-lg px-2 text-[13px] font-semibold",
+          TOOL_BUTTON_CLASS,
           open ? "bg-surface text-accent shadow-sm" : "text-ink-secondary",
         )}
       >

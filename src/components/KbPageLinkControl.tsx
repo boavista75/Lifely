@@ -1,5 +1,5 @@
 import { IconClose } from "@/components/icons";
-import { ToolButton } from "@/components/RichEditorToolbar";
+import { TOOL_BUTTON_CLASS, ToolButton } from "@/components/RichEditorToolbar";
 import { cn } from "@/lib/cn";
 import {
   displayKbTitle,
@@ -112,7 +112,10 @@ export function KbPageLinkControl({
         disabled={!editor.isActive("link")}
         onMouseDown={(event) => event.preventDefault()}
         onClick={unlink}
-        className="grid h-11 min-w-11 shrink-0 place-items-center rounded-lg text-ink-secondary disabled:text-ink-tertiary disabled:opacity-40"
+        className={cn(
+          TOOL_BUTTON_CLASS,
+          "text-ink-secondary disabled:text-ink-tertiary disabled:opacity-40",
+        )}
       >
         <IconClose className="size-4" />
       </button>

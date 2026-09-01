@@ -1,5 +1,5 @@
 import { IconKnowledge } from "@/components/icons";
-import { isKbPage } from "@/lib/kb";
+import { isKbFile, isKbPage } from "@/lib/kb";
 import { useKbStore } from "@/store/useKbStore";
 import { useUiStore } from "@/store/useUiStore";
 
@@ -12,7 +12,9 @@ export function KbLinkButton({
 }) {
   const nodes = useKbStore((state) => state.nodes);
   const openLinkedKbPage = useUiStore((state) => state.openLinkedKbPage);
-  const page = nodes.find((node) => node.id === pageId && isKbPage(node));
+  const page = nodes.find(
+    (node) => node.id === pageId && (isKbPage(node) || isKbFile(node)),
+  );
 
   return (
     <button
