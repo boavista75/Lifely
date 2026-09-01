@@ -4,7 +4,7 @@ import { KbExplorer } from "@/components/KbExplorer";
 import { KbMediaControl } from "@/components/KbMediaControl";
 import { KbPageLinkControl } from "@/components/KbPageLinkControl";
 import { KbTextScaleControl } from "@/components/KbTextScaleControl";
-import { RichEditorToolbar } from "@/components/RichEditorToolbar";
+import { RichEditorToolbar, ToolGroup } from "@/components/RichEditorToolbar";
 import { IconChevron, IconSearch } from "@/components/icons";
 import {
   findInEditor,
@@ -291,12 +291,18 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
           editor={editor}
           extra={
             <>
-              <KbTextScaleControl
-                scale={page.textScale ?? KB_TEXT_SCALE_DEFAULT}
-                onChange={(textScale) => updateNode(page.id, { textScale })}
-              />
-              <KbMediaControl editor={editor} />
-              <KbPageLinkControl editor={editor} currentPageId={page.id} />
+              <ToolGroup label="Veličina teksta">
+                <KbTextScaleControl
+                  scale={page.textScale ?? KB_TEXT_SCALE_DEFAULT}
+                  onChange={(textScale) => updateNode(page.id, { textScale })}
+                />
+              </ToolGroup>
+              <ToolGroup label="Mediji">
+                <KbMediaControl editor={editor} />
+              </ToolGroup>
+              <ToolGroup label="Linkovi">
+                <KbPageLinkControl editor={editor} currentPageId={page.id} />
+              </ToolGroup>
             </>
           }
         />

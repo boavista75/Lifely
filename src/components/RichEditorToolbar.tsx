@@ -15,121 +15,153 @@ export function RichEditorToolbar({
 }) {
   return (
     <div className="shrink-0 px-3 pb-2 md:px-6">
-      <div className="flex flex-wrap content-start gap-0.5 rounded-2xl bg-surface-2/90 p-1">
-        <ToolButton
-          label="Naslov 1"
-          active={editor.isActive("heading", { level: 1 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()
-          }
-        >
-          H1
-        </ToolButton>
-        <ToolButton
-          label="Naslov 2"
-          active={editor.isActive("heading", { level: 2 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
-        >
-          H2
-        </ToolButton>
-        <ToolButton
-          label="Naslov 3"
-          active={editor.isActive("heading", { level: 3 })}
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
-        >
-          H3
-        </ToolButton>
-        <ToolButton
-          label="Podebljano"
-          active={editor.isActive("bold")}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <span className="font-bold">B</span>
-        </ToolButton>
-        <ToolButton
-          label="Kurziv"
-          active={editor.isActive("italic")}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <span className="italic">I</span>
-        </ToolButton>
-        <ToolButton
-          label="Podvučeno"
-          active={editor.isActive("underline")}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <span className="underline">U</span>
-        </ToolButton>
-        <ColorMenu
-          editor={editor}
-          label="Boja teksta"
-          kind="text"
-          current={editor.getAttributes("textStyle").color as string | undefined}
-        />
-        <ColorMenu
-          editor={editor}
-          label="Pozadina teksta"
-          kind="highlight"
-          current={
-            editor.getAttributes("highlight").color as string | undefined
-          }
-        />
-        <ToolButton
-          label="Lista sa tačkama"
-          active={editor.isActive("bulletList")}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
-            <circle cx="3" cy="4" r="1.15" fill="currentColor" />
-            <circle cx="3" cy="8" r="1.15" fill="currentColor" />
-            <circle cx="3" cy="12" r="1.15" fill="currentColor" />
-            <path
-              d="M6.5 4h7M6.5 8h7M6.5 12h7"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              fill="none"
-            />
-          </svg>
-        </ToolButton>
-        <ToolButton
-          label="Numerisana lista"
-          active={editor.isActive("orderedList")}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <span className="text-[12px] tracking-tight">1.</span>
-        </ToolButton>
-        <ToolButton
-          label="Lista sa kvačicama"
-          active={editor.isActive("taskList")}
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
-        >
-          <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
-            <rect
-              x="2.2"
-              y="2.2"
-              width="11.6"
-              height="11.6"
-              rx="2.2"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-            />
-            <path
-              d="M4.6 8.1 6.7 10.2 11.4 5.6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </ToolButton>
+      <div
+        role="toolbar"
+        aria-label="Alati za uređivanje"
+        className="flex flex-wrap content-start items-center gap-y-0.5 rounded-2xl bg-surface-2/90 p-1"
+      >
+        <ToolGroup label="Naslovi">
+          <ToolButton
+            label="Naslov 1"
+            active={editor.isActive("heading", { level: 1 })}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            }
+          >
+            H1
+          </ToolButton>
+          <ToolButton
+            label="Naslov 2"
+            active={editor.isActive("heading", { level: 2 })}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            }
+          >
+            H2
+          </ToolButton>
+          <ToolButton
+            label="Naslov 3"
+            active={editor.isActive("heading", { level: 3 })}
+            onClick={() =>
+              editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }
+          >
+            H3
+          </ToolButton>
+        </ToolGroup>
+        <ToolGroup label="Formatiranje">
+          <ToolButton
+            label="Podebljano"
+            active={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <span className="font-bold">B</span>
+          </ToolButton>
+          <ToolButton
+            label="Kurziv"
+            active={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <span className="italic">I</span>
+          </ToolButton>
+          <ToolButton
+            label="Podvučeno"
+            active={editor.isActive("underline")}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+          >
+            <span className="underline">U</span>
+          </ToolButton>
+        </ToolGroup>
+        <ToolGroup label="Boje">
+          <ColorMenu
+            editor={editor}
+            label="Boja teksta"
+            kind="text"
+            current={
+              editor.getAttributes("textStyle").color as string | undefined
+            }
+          />
+          <ColorMenu
+            editor={editor}
+            label="Pozadina teksta"
+            kind="highlight"
+            current={
+              editor.getAttributes("highlight").color as string | undefined
+            }
+          />
+        </ToolGroup>
+        <ToolGroup label="Liste">
+          <ToolButton
+            label="Lista sa tačkama"
+            active={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
+              <circle cx="3" cy="4" r="1.15" fill="currentColor" />
+              <circle cx="3" cy="8" r="1.15" fill="currentColor" />
+              <circle cx="3" cy="12" r="1.15" fill="currentColor" />
+              <path
+                d="M6.5 4h7M6.5 8h7M6.5 12h7"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                fill="none"
+              />
+            </svg>
+          </ToolButton>
+          <ToolButton
+            label="Numerisana lista"
+            active={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <span className="text-[12px] tracking-tight">1.</span>
+          </ToolButton>
+          <ToolButton
+            label="Lista sa kvačicama"
+            active={editor.isActive("taskList")}
+            onClick={() => editor.chain().focus().toggleTaskList().run()}
+          >
+            <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
+              <rect
+                x="2.2"
+                y="2.2"
+                width="11.6"
+                height="11.6"
+                rx="2.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+              />
+              <path
+                d="M4.6 8.1 6.7 10.2 11.4 5.6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </ToolButton>
+        </ToolGroup>
         {extra}
       </div>
+    </div>
+  );
+}
+
+export function ToolGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="flex shrink-0 items-center gap-0.5 after:mx-1 after:h-5 after:w-px after:shrink-0 after:self-center after:bg-ink/14 last:after:hidden after:content-['']"
+    >
+      {children}
     </div>
   );
 }
