@@ -84,10 +84,24 @@ const TASK_LIST = [
   TaskListPointerFix,
 ];
 
+const EDITOR_LINK = {
+  openOnClick: false,
+  autolink: false,
+  linkOnPaste: false,
+  protocols: [{ scheme: "kb", optionalSlashes: true }],
+  HTMLAttributes: {
+    class: "kb-page-link",
+    target: "_self",
+    rel: "noopener noreferrer",
+  },
+  isAllowedUri: (url: string, ctx: { defaultValidate: (url: string) => boolean }) =>
+    url.startsWith("kb://") || ctx.defaultValidate(url),
+};
+
 export const NOTE_EXTENSIONS = [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
-    link: false,
+    link: EDITOR_LINK,
   }),
   TextStyle,
   Color,
@@ -99,19 +113,7 @@ export const NOTE_EXTENSIONS = [
 export const KB_EXTENSIONS = [
   StarterKit.configure({
     heading: { levels: [1, 2, 3] },
-    link: {
-      openOnClick: false,
-      autolink: false,
-      linkOnPaste: false,
-      protocols: [{ scheme: "kb", optionalSlashes: true }],
-      HTMLAttributes: {
-        class: "kb-page-link",
-        target: "_self",
-        rel: "noopener noreferrer",
-      },
-      isAllowedUri: (url, ctx) =>
-        url.startsWith("kb://") || ctx.defaultValidate(url),
-    },
+    link: EDITOR_LINK,
   }),
   TextStyle,
   Color,

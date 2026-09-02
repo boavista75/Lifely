@@ -57,7 +57,7 @@ function SalaryForm({
   }, []);
 
   function submit(force: boolean) {
-    const parsed = parseAmount(amount);
+    const parsed = parseAmount(amount, { allowZero: true });
     if (parsed === null) {
       setError("Unesite iznos plate u dinarima");
       amountRef.current?.focus();

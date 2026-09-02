@@ -290,7 +290,7 @@ export function LogoMark({ className }: { className?: string }) {
         d="M11.2 8.5h3.4c4.1 0 6.7 2.2 6.7 5.7 0 3.6-2.7 5.8-6.8 5.8H11.2V8.5Zm3.3 8.6c2.3 0 3.6-1.2 3.6-2.9s-1.3-2.8-3.6-2.8h-.7v5.7h.7Z"
         fill="var(--accent-fg)"
       />
-      <circle cx="22.2" cy="22.2" r="2.1" fill="#cdcdcd" />
+      <circle cx="22.2" cy="22.2" r="2.1" fill="var(--silver)" />
     </svg>
   );
 }

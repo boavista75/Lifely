@@ -3,6 +3,7 @@ import { KbExplorer } from "@/components/KbExplorer";
 import { TABS } from "@/nav";
 import { cn } from "@/lib/cn";
 import { snappySpring } from "@/lib/motion";
+import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useUiStore } from "@/store/useUiStore";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -12,13 +13,13 @@ export function Sidebar() {
   const kbPageId = useUiStore((state) => state.kbPageId);
   const reduce = useReducedMotion();
   const showKbTree = tab === "knowledge" && Boolean(kbPageId);
+  const { asideRef, width, handleProps } = useSidebarResize();
 
   return (
     <aside
-      className={cn(
-        "relative z-10 hidden h-full shrink-0 flex-col px-3 md:flex",
-        showKbTree ? "w-[280px]" : "w-[248px]",
-      )}
+      ref={asideRef}
+      style={{ width }}
+      className="relative z-10 hidden h-full min-w-0 shrink-0 flex-col px-3 md:flex"
     >
       <div className="page-header px-3">
         <BrandLockup />
@@ -36,7 +37,7 @@ export function Sidebar() {
               onClick={() => setTab(id)}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex min-h-11 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium transition-colors duration-200",
+                "relative flex min-h-11 min-w-0 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium transition-colors duration-200",
                 active
                   ? "text-accent"
                   : "text-ink-secondary hover:text-ink",
@@ -49,13 +50,16 @@ export function Sidebar() {
                   transition={reduce ? { duration: 0.01 } : snappySpring}
                 />
               )}
-              <Icon className="relative size-[22px]" />
-              <span className="relative">{label}</span>
+              <Icon className="relative size-[22px] shrink-0" />
+              <span className="relative min-w-0 truncate">{label}</span>
             </button>
           );
         })}
       </nav>
       {showKbTree ? <KbExplorer variant="sidebar" /> : null}
+      <div {...handleProps}>
+        <span className="my-8 w-px self-stretch rounded-full bg-ink/22 transition-[background-color,width,box-shadow] duration-150 group-hover:w-0.5 group-hover:bg-accent group-focus-visible:bg-accent group-data-[resizing=true]:w-0.5 group-data-[resizing=true]:bg-accent" />
+      </div>
     </aside>
   );
 }

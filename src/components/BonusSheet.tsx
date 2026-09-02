@@ -1,7 +1,7 @@
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { Sheet } from "@/components/Sheet";
 import { BUCKETS, parseAmount } from "@/lib/finances";
-import { todayKey } from "@/lib/dates";
+import { dateKeyInMonth, todayKey } from "@/lib/dates";
 import { useFinancesStore } from "@/store/useFinancesStore";
 import type { FinanceBucket } from "@/types";
 import { useEffect, useRef, useState } from "react";
@@ -10,15 +10,17 @@ type Props = {
   open: boolean;
   onClose: () => void;
   defaultBucket?: FinanceBucket;
+  defaultMonth?: string;
 };
 
-export function BonusSheet({ open, onClose, defaultBucket }: Props) {
+export function BonusSheet({ open, onClose, defaultBucket, defaultMonth }: Props) {
   return (
     <Sheet open={open} onClose={onClose} labelledBy="bonus-sheet-title" zIndex={60}>
       {open && (
         <BonusForm
-          key={defaultBucket ?? "bonus"}
+          key={`${defaultBucket ?? "bonus"}-${defaultMonth ?? "today"}`}
           defaultBucket={defaultBucket}
+          defaultMonth={defaultMonth}
           onClose={onClose}
         />
       )}
@@ -28,15 +30,19 @@ export function BonusSheet({ open, onClose, defaultBucket }: Props) {
 
 function BonusForm({
   defaultBucket,
+  defaultMonth,
   onClose,
 }: {
   defaultBucket?: FinanceBucket;
+  defaultMonth?: string;
   onClose: () => void;
 }) {
   const addBonus = useFinancesStore((state) => state.addBonus);
   const [bucket, setBucket] = useState<FinanceBucket>(defaultBucket ?? "needs");
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(todayKey());
+  const [date, setDate] = useState(
+    defaultMonth ? dateKeyInMonth(defaultMonth) : todayKey(),
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);

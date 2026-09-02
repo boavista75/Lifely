@@ -200,7 +200,9 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
       }
       const next = useKbStore
         .getState()
-        .nodes.find((node) => node.id === id && isKbPage(node));
+        .nodes.find(
+          (node) => node.id === id && (isKbPage(node) || isKbFile(node)),
+        );
       if (next) openPageRef.current(next.id, next.parentId);
     }
     dom.addEventListener("click", onClick);

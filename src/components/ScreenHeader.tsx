@@ -27,7 +27,7 @@ export function ScreenHeader({
                 <IconChevron className="size-5" />
               </button>
             ) : null}
-            <h1 className="page-title flex min-h-11 items-center">{title}</h1>
+            <h1 className="page-title flex min-h-11 min-w-0 items-center truncate">{title}</h1>
           </div>
           {subtitle}
         </div>

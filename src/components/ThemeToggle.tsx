@@ -1,3 +1,4 @@
+import { AppearanceButton } from "@/components/AppearanceButton";
 import { IconMoon, IconSun } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -34,9 +35,12 @@ export function ThemeToggle() {
 
 export function BrandLockup() {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-3">
-      <span className="page-title">Lifely</span>
-      <ThemeToggle />
+    <div className="flex min-h-11 min-w-0 items-center justify-between gap-3">
+      <span className="page-title min-w-0 truncate">Lifely</span>
+      <div className="flex shrink-0 items-center gap-1">
+        <AppearanceButton />
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

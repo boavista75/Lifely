@@ -16,6 +16,7 @@ import {
 } from "@/lib/dates";
 import { sortDayItems } from "@/lib/items";
 import { monthSlide, slideTransition } from "@/lib/motion";
+import { CalendarDragProvider } from "@/hooks/useCalendarItemDrag";
 import { MonthGrid, WeekGrid } from "@/screens/MonthGrid";
 import { useItemsStore } from "@/store/useItemsStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -30,6 +31,7 @@ export function CalendarScreen() {
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
   const openDay = useUiStore((state) => state.openDay);
+  const openNewItem = useUiStore((state) => state.openNewItem);
   const openEditItem = useUiStore((state) => state.openEditItem);
   const reduce = useReducedMotion();
 
@@ -69,7 +71,11 @@ export function CalendarScreen() {
       setDirection(date.getTime() > cursor.getTime() ? 1 : -1);
       setCursor(date);
     }
-    openDay(key);
+    if ((itemsByDate.get(key)?.length ?? 0) > 0) {
+      openDay(key);
+    } else {
+      openNewItem(key);
+    }
   }
 
   function onViewChange(next: CalendarView) {
@@ -84,7 +90,7 @@ export function CalendarScreen() {
           <h1 className="page-title flex min-h-11 min-w-0 items-center md:hidden">
             Kalendar
           </h1>
-          <p className="hidden min-w-0 font-display text-[34px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:flex md:min-h-11 md:items-center">
+          <p className="hidden min-w-0 truncate font-display text-[34px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:flex md:min-h-11 md:items-center">
             {title}
           </p>
           <div className="flex min-h-11 shrink-0 items-center gap-0.5">
@@ -133,37 +139,39 @@ export function CalendarScreen() {
       )}
 
       <div className="relative min-h-0 flex-1 overflow-hidden md:px-4 md:pb-4">
-        {view === "month" ? (
-          <PeriodPane
-            key="month"
-            periodKey={periodKey}
-            direction={direction}
-            reduce={Boolean(reduce)}
-          >
-            <MonthGrid
-              days={monthDays}
-              cursor={cursor}
-              selectedDate={selectedDate}
-              itemsByDate={itemsByDate}
-              onSelect={onSelectDay}
-            />
-          </PeriodPane>
-        ) : (
-          <PeriodPane
-            key="week"
-            periodKey={periodKey}
-            direction={direction}
-            reduce={Boolean(reduce)}
-          >
-            <WeekGrid
-              days={weekDays}
-              selectedDate={selectedDate}
-              itemsByDate={itemsByDate}
-              onSelectDay={onSelectDay}
-              onOpenItem={openEditItem}
-            />
-          </PeriodPane>
-        )}
+        <CalendarDragProvider>
+          {view === "month" ? (
+            <PeriodPane
+              key="month"
+              periodKey={periodKey}
+              direction={direction}
+              reduce={Boolean(reduce)}
+            >
+              <MonthGrid
+                days={monthDays}
+                cursor={cursor}
+                selectedDate={selectedDate}
+                itemsByDate={itemsByDate}
+                onSelect={onSelectDay}
+              />
+            </PeriodPane>
+          ) : (
+            <PeriodPane
+              key="week"
+              periodKey={periodKey}
+              direction={direction}
+              reduce={Boolean(reduce)}
+            >
+              <WeekGrid
+                days={weekDays}
+                selectedDate={selectedDate}
+                itemsByDate={itemsByDate}
+                onSelectDay={onSelectDay}
+                onOpenItem={openEditItem}
+              />
+            </PeriodPane>
+          )}
+        </CalendarDragProvider>
       </div>
     </div>
   );

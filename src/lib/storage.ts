@@ -1,5 +1,16 @@
 import { EMPTY_FINANCE_DATA } from "@/lib/finances";
 import { clampKbTextScale, KB_TEXT_SCALE_DEFAULT, isKbFile, isKbPage } from "@/lib/kb";
+import {
+  clampSidebarWidth,
+  SIDEBAR_WIDTH_DEFAULT,
+} from "@/lib/sidebar";
+import {
+  applyPaletteVars,
+  DEFAULT_PALETTE_ID,
+  getPalette,
+  isPaletteId,
+  type PaletteId,
+} from "@/lib/palettes";
 import type {
   ExpenseCategory,
   FinanceBonus,
@@ -18,6 +29,8 @@ const NOTES_KEY = "lifely-notes";
 const KB_KEY = "lifely-kb";
 const TAB_KEY = "lifely-tab";
 const THEME_KEY = "lifely-theme";
+const SIDEBAR_WIDTH_KEY = "lifely-sidebar-width";
+const PALETTE_KEY = "lifely-palette";
 const FINANCES_KEY = "lifely-finances";
 
 const BUCKETS: FinanceBucket[] = ["needs", "wants", "savings"];
@@ -249,13 +262,58 @@ export function saveTheme(theme: Theme): void {
   }
 }
 
-export function applyTheme(theme: Theme): void {
+export function loadSidebarWidth(): number {
+  if (typeof localStorage === "undefined") return SIDEBAR_WIDTH_DEFAULT;
+  try {
+    const raw = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    const parsed = raw == null ? NaN : Number(raw);
+    return clampSidebarWidth(
+      Number.isFinite(parsed) ? parsed : SIDEBAR_WIDTH_DEFAULT,
+    );
+  } catch {
+    return SIDEBAR_WIDTH_DEFAULT;
+  }
+}
+
+export function saveSidebarWidth(width: number): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clampSidebarWidth(width)));
+  } catch {
+    // ignore
+  }
+}
+
+export function loadPalette(): PaletteId {
+  if (typeof localStorage === "undefined") return DEFAULT_PALETTE_ID;
+  try {
+    const raw = localStorage.getItem(PALETTE_KEY);
+    if (isPaletteId(raw)) return raw;
+  } catch {
+    // ignore
+  }
+  return DEFAULT_PALETTE_ID;
+}
+
+export function savePalette(palette: PaletteId): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(PALETTE_KEY, palette);
+  } catch {
+    // ignore
+  }
+}
+
+export function applyTheme(theme: Theme, paletteId: PaletteId = loadPalette()): void {
   if (typeof document === "undefined") return;
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme;
+  const palette = getPalette(paletteId);
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+  applyPaletteVars(root, palette);
   const meta = document.querySelector('meta[name="theme-color"]:not([media])');
   if (meta) {
-    meta.setAttribute("content", theme === "dark" ? "#011638" : "#DFF8EB");
+    meta.setAttribute("content", theme === "dark" ? palette.navy : palette.mint);
   }
 }
 
@@ -271,12 +329,16 @@ function isPositiveAmount(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
+function isNonNegativeAmount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
 function isSalary(value: unknown): value is FinanceSalary {
   if (!isRecord(value)) return false;
   return (
     typeof value.id === "string" &&
     isMonthKey(value.month) &&
-    isPositiveAmount(value.amount) &&
+    isNonNegativeAmount(value.amount) &&
     typeof value.createdAt === "string" &&
     typeof value.updatedAt === "string"
   );

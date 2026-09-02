@@ -25,7 +25,7 @@
   --mint: #dff8eb;
   --forest: #214e34;
   --canvas: var(--mint);
-  --surface: #f4fcf7;
+  --surface: color-mix(in srgb, var(--mint) 58%, #ffffff);
   --surface-2: color-mix(in srgb, var(--silver) 42%, var(--mint));
   --ink: var(--navy);
   --ink-secondary: var(--slate);
@@ -189,6 +189,32 @@ select.field {
 
 .pressable:active {
   opacity: 0.72;
+}
+
+body.calendar-item-dragging,
+body.calendar-item-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+body.calendar-item-dragging {
+  touch-action: none;
+}
+
+body.sidebar-resizing,
+body.sidebar-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.sidebar-resizing {
+  touch-action: none;
+}
+
+body.sidebar-resizing iframe,
+body.sidebar-resizing canvas,
+body.sidebar-resizing video {
+  pointer-events: none !important;
 }
 
 .page-header {

@@ -117,11 +117,15 @@ export function formatRsd(amount: number): string {
   return `${formatRsdNumber(amount)} RSD`;
 }
 
-export function parseAmount(raw: string): number | null {
+export function parseAmount(
+  raw: string,
+  options?: { allowZero?: boolean },
+): number | null {
   const cleaned = raw.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
   if (!cleaned) return null;
   const value = Number(cleaned);
-  if (!Number.isFinite(value) || value <= 0) return null;
+  if (!Number.isFinite(value)) return null;
+  if (options?.allowZero ? value < 0 : value <= 0) return null;
   return Math.round(value);
 }
 

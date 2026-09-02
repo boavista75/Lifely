@@ -35,6 +35,13 @@ export function todayKey(): string {
   return toDateKey(new Date());
 }
 
+/** Today if it falls in `month` (`yyyy-MM`), otherwise the 1st of that month. */
+export function dateKeyInMonth(month: string, now = new Date()): string {
+  const today = toDateKey(now);
+  if (today.startsWith(month)) return today;
+  return `${month}-01`;
+}
+
 export function isDateKeyToday(key: string): boolean {
   return key === todayKey();
 }

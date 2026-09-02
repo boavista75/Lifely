@@ -134,7 +134,13 @@ export function FinancesScreen() {
                 summary={summarizeMonth(view.month, data)}
                 bucket={view.bucket}
                 onAddExpense={(b) => setSheet({ type: "expense", bucket: b })}
-                onEditExpense={(id) => setSheet({ type: "expense", id })}
+                onEditExpense={(id) =>
+                  setSheet({
+                    type: "expense",
+                    bucket: view.bucket === "savings" ? undefined : view.bucket,
+                    id,
+                  })
+                }
                 onAddBonus={() => setSheet({ type: "bonus", bucket: view.bucket })}
               />
             ) : historyMonth ? (
@@ -207,11 +213,17 @@ export function FinancesScreen() {
         onClose={() => setSheet(null)}
         bucket={sheet?.type === "expense" ? sheet.bucket : undefined}
         existing={existingExpense}
+        defaultMonth={
+          view.kind === "bucket" ? view.month : (historyMonth ?? undefined)
+        }
       />
       <BonusSheet
         open={sheet?.type === "bonus"}
         onClose={() => setSheet(null)}
         defaultBucket={sheet?.type === "bonus" ? sheet.bucket : undefined}
+        defaultMonth={
+          view.kind === "bucket" ? view.month : (historyMonth ?? undefined)
+        }
       />
       <FinanceConfirm
         open={resetOpen}

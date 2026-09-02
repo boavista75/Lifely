@@ -4,6 +4,8 @@ import {
   descendantIds,
   isKbFile,
   KB_TEXT_SCALE_DEFAULT,
+  pruneUnreachableKbNodes,
+  reachableKbIds,
   uniqueFolderTitle,
 } from "@/lib/kb";
 import { convertDocumentToHtml } from "@/lib/kbFilePreview";
@@ -45,8 +47,34 @@ function persist(nodes: LifelyKbNode[]): LifelyKbNode[] {
   return nodes;
 }
 
+function dropUnreachable(nodes: LifelyKbNode[]): {
+  next: LifelyKbNode[];
+  removed: LifelyKbNode[];
+} {
+  const reachable = reachableKbIds(nodes);
+  if (reachable.size === nodes.length) {
+    return { next: nodes, removed: [] };
+  }
+  return {
+    next: nodes.filter((node) => reachable.has(node.id)),
+    removed: nodes.filter((node) => !reachable.has(node.id)),
+  };
+}
+
+function loadLiveKb(): LifelyKbNode[] {
+  const loaded = loadKb();
+  const { next, removed } = dropUnreachable(loaded);
+  if (removed.length === 0) return next;
+  saveKb(next);
+  useItemsStore.getState().unlinkKbPages(removed.map((node) => node.id));
+  void deleteMedia(
+    removed.filter(isKbFile).map((file) => file.mediaId),
+  );
+  return next;
+}
+
 export const useKbStore = create<KbState>((set, get) => ({
-  nodes: loadKb(),
+  nodes: loadLiveKb(),
 
   addFolder: (parentId) => {
     const created = new Date();
@@ -136,20 +164,25 @@ export const useKbStore = create<KbState>((set, get) => ({
   },
 
   deleteNode: (id) => {
-    const target = get().nodes.find((node) => node.id === id);
-    const removed =
-      target?.kind === "folder" ? descendantIds(get().nodes, id) : [id];
-    const drop = new Set(removed);
-    const mediaIds = get()
-      .nodes.filter(isKbFile)
-      .filter((node) => drop.has(node.id))
-      .map((node) => node.mediaId);
-    set({
-      nodes: persist(get().nodes.filter((node) => !drop.has(node.id))),
-    });
-    useItemsStore.getState().unlinkKbPages(removed);
-    void deleteMedia(mediaIds);
-    return removed;
+    const current = get().nodes;
+    const target = current.find((node) => node.id === id);
+    if (!target) return [];
+    const marked = new Set(
+      target.kind === "folder" ? descendantIds(current, id) : [id],
+    );
+    const remaining = pruneUnreachableKbNodes(
+      current.filter((node) => !marked.has(node.id)),
+    );
+    const removed = current.filter(
+      (node) => !remaining.some((entry) => entry.id === node.id),
+    );
+    const removedIds = removed.map((node) => node.id);
+    set({ nodes: persist(remaining) });
+    useItemsStore.getState().unlinkKbPages(removedIds);
+    void deleteMedia(
+      removed.filter(isKbFile).map((node) => node.mediaId),
+    );
+    return removedIds;
   },
 
   moveNode: (id, parentId) => {

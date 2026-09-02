@@ -1,26 +1,64 @@
-import { IconClose } from "@/components/icons";
+import { IconClose, IconFolder, IconKnowledge } from "@/components/icons";
 import { TOOL_BUTTON_CLASS, ToolButton } from "@/components/RichEditorToolbar";
 import { cn } from "@/lib/cn";
 import {
   displayKbTitle,
+  isKbFile,
   isKbPage,
+  kbFolderPathLabel,
   kbHref,
   pageIdFromHref,
+  reachableKbIds,
 } from "@/lib/kb";
 import { useKbStore } from "@/store/useKbStore";
+import type { LifelyKbFile, LifelyKbNode, LifelyKbPage } from "@/types";
 import type { Editor } from "@tiptap/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+type LinkDoc = LifelyKbPage | LifelyKbFile;
+
+function isLinkDoc(node: LifelyKbNode): node is LinkDoc {
+  return isKbPage(node) || isKbFile(node);
+}
 
 export function KbPageLinkControl({
   editor,
   currentPageId,
 }: {
   editor: Editor;
-  currentPageId: string;
+  currentPageId?: string;
 }) {
   const nodes = useKbStore((state) => state.nodes);
-  const pages = nodes.filter(isKbPage).filter((page) => page.id !== currentPageId);
+  const groups = useMemo(() => {
+    const live = reachableKbIds(nodes);
+    const docs = nodes.filter(
+      (node): node is LinkDoc =>
+        isLinkDoc(node) && node.id !== currentPageId && live.has(node.id),
+    );
+    const byPath = new Map<string, LinkDoc[]>();
+    for (const doc of docs) {
+      const path = kbFolderPathLabel(nodes, doc.parentId);
+      const list = byPath.get(path);
+      if (list) list.push(doc);
+      else byPath.set(path, [doc]);
+    }
+    for (const list of byPath.values()) {
+      list.sort((a, b) =>
+        displayKbTitle(a.title, a.createdAt).localeCompare(
+          displayKbTitle(b.title, b.createdAt),
+          "sr-Latn",
+        ),
+      );
+    }
+    return [...byPath.entries()].sort(([a], [b]) => {
+      if (a === b) return 0;
+      if (!a) return -1;
+      if (!b) return 1;
+      return a.localeCompare(b, "sr-Latn");
+    });
+  }, [currentPageId, nodes]);
+  const docCount = groups.reduce((sum, [, docs]) => sum + docs.length, 0);
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -28,7 +66,7 @@ export function KbPageLinkControl({
   const href = editor.getAttributes("link").href as string | undefined;
   const linkedId = pageIdFromHref(href);
   const linked =
-    nodes.find((node) => isKbPage(node) && node.id === linkedId) ?? null;
+    nodes.find((node) => isLinkDoc(node) && node.id === linkedId) ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -100,7 +138,7 @@ export function KbPageLinkControl({
   return (
     <div ref={buttonRef} className="flex shrink-0">
       <ToolButton
-        label="Link ka stranici"
+        label="Link ka Knowledge"
         active={open || editor.isActive("link")}
         onClick={toggle}
       >
@@ -125,7 +163,7 @@ export function KbPageLinkControl({
           <div
             ref={panelRef}
             role="listbox"
-            aria-label="Stranice"
+            aria-label="Knowledge"
             onMouseDown={(event) => event.preventDefault()}
             className="glass fixed z-[55] max-h-64 overflow-y-auto overscroll-contain rounded-2xl py-1 shadow-[var(--shadow-float)]"
             style={{
@@ -139,30 +177,46 @@ export function KbPageLinkControl({
                 Povezano: {displayKbTitle(linked.title, linked.createdAt)}
               </p>
             ) : null}
-            {pages.length === 0 ? (
+            {docCount === 0 ? (
               <p className="px-3.5 py-3 text-[13px] text-ink-tertiary">
-                Nema drugih stranica
+                {currentPageId ? "Nema drugih dokumenata" : "Nema dokumenata"}
               </p>
             ) : (
-              pages.map((page) => (
-                <button
-                  key={page.id}
-                  type="button"
-                  role="option"
-                  aria-selected={page.id === linkedId}
-                  onClick={() =>
-                    applyLink(
-                      page.id,
-                      displayKbTitle(page.title, page.createdAt),
-                    )
-                  }
-                  className={cn(
-                    "flex min-h-11 w-full items-center px-3.5 text-left text-[15px]",
-                    page.id === linkedId ? "text-accent" : "text-ink",
-                  )}
-                >
-                  {displayKbTitle(page.title, page.createdAt)}
-                </button>
+              groups.map(([path, docs]) => (
+                <div key={path || "__root"}>
+                  <div className="sticky top-0 z-10 flex items-center gap-1.5 bg-surface px-3.5 pb-1 pt-2 text-[12px] font-medium text-ink-secondary">
+                    {path ? (
+                      <IconFolder className="size-3.5 shrink-0 text-ink-tertiary" />
+                    ) : (
+                      <IconKnowledge className="size-3.5 shrink-0 text-ink-tertiary" />
+                    )}
+                    <span className="min-w-0 truncate">
+                      {path || "Na početku"}
+                    </span>
+                  </div>
+                  {docs.map((doc) => (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      role="option"
+                      aria-selected={doc.id === linkedId}
+                      onClick={() =>
+                        applyLink(
+                          doc.id,
+                          displayKbTitle(doc.title, doc.createdAt),
+                        )
+                      }
+                      className={cn(
+                        "flex min-h-11 w-full items-center px-3.5 pl-8 text-left text-[15px]",
+                        doc.id === linkedId ? "text-accent" : "text-ink",
+                      )}
+                    >
+                      <span className="truncate">
+                        {displayKbTitle(doc.title, doc.createdAt)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               ))
             )}
           </div>,

@@ -7,7 +7,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full w-full overflow-hidden bg-canvas text-ink">
       <Sidebar />
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="px-5 pt-[max(12px,env(safe-area-inset-top))] md:hidden">
           <BrandLockup />
         </div>

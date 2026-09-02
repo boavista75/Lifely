@@ -29,17 +29,33 @@
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem("lifely-theme");
+          var palettes = {
+            grove: ["#011638", "#364156", "#cdcdcd", "#dff8eb", "#214e34"],
+            harbor: ["#0d1b2a", "#1b263b", "#778da9", "#e0e1dd", "#415a77"],
+            moss: ["#2f3e46", "#354f52", "#84a98c", "#cad2c5", "#52796f"],
+            dusk: ["#22223b", "#4a4e69", "#c9ada7", "#f2e9e4", "#9a8c98"],
+            clay: ["#1c1412", "#3d2b2a", "#d7ccc8", "#f5ebe0", "#c0897e"],
+          };
+          var keys = ["--navy", "--slate", "--silver", "--mint", "--forest"];
+          var storedTheme = localStorage.getItem("lifely-theme");
           var theme =
-            stored === "light" || stored === "dark"
-              ? stored
+            storedTheme === "light" || storedTheme === "dark"
+              ? storedTheme
               : window.matchMedia("(prefers-color-scheme: dark)").matches
                 ? "dark"
                 : "light";
-          document.documentElement.dataset.theme = theme;
-          document.documentElement.style.colorScheme = theme;
+          var storedPalette = localStorage.getItem("lifely-palette");
+          var paletteId = palettes[storedPalette] ? storedPalette : "grove";
+          var colors = palettes[paletteId];
+          var root = document.documentElement;
+          root.dataset.theme = theme;
+          root.dataset.palette = paletteId;
+          root.style.colorScheme = theme;
+          for (var i = 0; i < keys.length; i++) {
+            root.style.setProperty(keys[i], colors[i]);
+          }
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute("content", theme === "dark" ? "#011638" : "#DFF8EB");
+          if (meta) meta.setAttribute("content", theme === "dark" ? colors[0] : colors[3]);
         } catch (e) {
           document.documentElement.dataset.theme = "light";
         }

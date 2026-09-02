@@ -94,6 +94,26 @@ export function descendantIds(
   return ids;
 }
 
+export function reachableKbIds(nodes: LifelyKbNode[]): Set<string> {
+  const ids = new Set<string>();
+  const stack: Array<string | null> = [null];
+  while (stack.length > 0) {
+    const parentId = stack.pop() ?? null;
+    for (const child of nodes) {
+      if (child.parentId !== parentId || ids.has(child.id)) continue;
+      ids.add(child.id);
+      if (child.kind === "folder") stack.push(child.id);
+    }
+  }
+  return ids;
+}
+
+export function pruneUnreachableKbNodes(nodes: LifelyKbNode[]): LifelyKbNode[] {
+  const reachable = reachableKbIds(nodes);
+  if (reachable.size === nodes.length) return nodes;
+  return nodes.filter((node) => reachable.has(node.id));
+}
+
 export function canMoveKbNode(
   nodes: LifelyKbNode[],
   nodeId: string,
@@ -205,7 +225,9 @@ export function searchKbPages(
 ): LifelyKbPage[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
+  const reachable = reachableKbIds(nodes);
   return nodes.filter(isKbPage).filter((page) => {
+    if (!reachable.has(page.id)) return false;
     const title = displayKbTitle(page.title, page.createdAt).toLowerCase();
     const body = notePreview(page.content).toLowerCase();
     return title.includes(needle) || body.includes(needle);
@@ -218,7 +240,9 @@ export function searchKbFiles(
 ): LifelyKbFile[] {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
+  const reachable = reachableKbIds(nodes);
   return nodes.filter(isKbFile).filter((file) => {
+    if (!reachable.has(file.id)) return false;
     if (file.title.toLowerCase().includes(needle)) return true;
     if (!file.content) return false;
     return notePreview(file.content).toLowerCase().includes(needle);

@@ -1,6 +1,6 @@
 import { IconClose, IconFolder, IconKnowledge } from "@/components/icons";
 import { cn } from "@/lib/cn";
-import { displayKbTitle, kbFolderPathLabel } from "@/lib/kb";
+import { displayKbTitle, kbFolderPathLabel, reachableKbIds } from "@/lib/kb";
 import { useKbStore } from "@/store/useKbStore";
 import type { LifelyKbFile, LifelyKbNode, LifelyKbPage } from "@/types";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -55,8 +55,11 @@ function positionPanel(trigger: HTMLElement): PanelPos {
 
 export function KbPagePicker({ value, onChange }: Props) {
   const nodes = useKbStore((state) => state.nodes);
+  const live = useMemo(() => reachableKbIds(nodes), [nodes]);
   const groups = useMemo(() => {
-    const docs = nodes.filter(isPickerDoc);
+    const docs = nodes.filter(
+      (node): node is PickerDoc => isPickerDoc(node) && live.has(node.id),
+    );
     const byPath = new Map<string, PickerDoc[]>();
     for (const doc of docs) {
       const path = kbFolderPathLabel(nodes, doc.parentId);
@@ -78,14 +81,16 @@ export function KbPagePicker({ value, onChange }: Props) {
       if (!b) return 1;
       return a.localeCompare(b, "sr-Latn");
     });
-  }, [nodes]);
+  }, [live, nodes]);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PanelPos | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const selected =
-    nodes.find((node) => node.id === value && isPickerDoc(node)) ?? null;
+    nodes.find(
+      (node) => node.id === value && isPickerDoc(node) && live.has(node.id),
+    ) ?? null;
   const selectedPath = selected
     ? kbFolderPathLabel(nodes, selected.parentId)
     : "";

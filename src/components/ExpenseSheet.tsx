@@ -1,6 +1,6 @@
 import { Sheet } from "@/components/Sheet";
 import { cn } from "@/lib/cn";
-import { todayKey } from "@/lib/dates";
+import { dateKeyInMonth, todayKey } from "@/lib/dates";
 import { categoriesForBucket, categoryMeta, parseAmount } from "@/lib/finances";
 import { useFinancesStore } from "@/store/useFinancesStore";
 import type { ExpenseCategory, FinanceBucket, FinanceExpense } from "@/types";
@@ -13,6 +13,7 @@ type Props = {
   onClose: () => void;
   bucket?: SpendBucket;
   existing?: FinanceExpense | null;
+  defaultMonth?: string;
 };
 
 const BUCKET_OPTIONS: { value: SpendBucket; label: string; hint: string }[] = [
@@ -20,14 +21,15 @@ const BUCKET_OPTIONS: { value: SpendBucket; label: string; hint: string }[] = [
   { value: "wants", label: "30%", hint: "Visa · izlazci" },
 ];
 
-export function ExpenseSheet({ open, onClose, bucket, existing }: Props) {
+export function ExpenseSheet({ open, onClose, bucket, existing, defaultMonth }: Props) {
   return (
     <Sheet open={open} onClose={onClose} labelledBy="expense-sheet-title" zIndex={60}>
       {open && (
         <ExpenseForm
-          key={existing?.id ?? bucket ?? "expense"}
+          key={existing?.id ?? `${bucket ?? "expense"}-${defaultMonth ?? "today"}`}
           bucket={bucket}
           existing={existing ?? null}
+          defaultMonth={defaultMonth}
           onClose={onClose}
         />
       )}
@@ -38,10 +40,12 @@ export function ExpenseSheet({ open, onClose, bucket, existing }: Props) {
 function ExpenseForm({
   bucket,
   existing,
+  defaultMonth,
   onClose,
 }: {
   bucket?: SpendBucket;
   existing: FinanceExpense | null;
+  defaultMonth?: string;
   onClose: () => void;
 }) {
   const addExpense = useFinancesStore((state) => state.addExpense);
@@ -61,7 +65,10 @@ function ExpenseForm({
   const [amount, setAmount] = useState(
     existing ? String(existing.amount) : "",
   );
-  const [date, setDate] = useState(existing?.date ?? todayKey());
+  const [date, setDate] = useState(
+    existing?.date ?? (defaultMonth ? dateKeyInMonth(defaultMonth) : todayKey()),
+  );
+  const bucketLocked = Boolean(bucket);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const amountRef = useRef<HTMLInputElement>(null);
@@ -142,41 +149,43 @@ function ExpenseForm({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 md:px-5">
-        <div className="mb-4">
-          <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Prvo izaberi grupu
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {BUCKET_OPTIONS.map((entry) => {
-              const selected = entry.value === spendBucket;
-              return (
-                <button
-                  key={entry.value}
-                  type="button"
-                  onClick={() => pickBucket(entry.value)}
-                  className={cn(
-                    "flex min-h-14 flex-col items-center justify-center rounded-2xl px-3 transition-colors",
-                    selected
-                      ? "bg-accent text-accent-fg"
-                      : "bg-surface-2 text-ink",
-                  )}
-                >
-                  <span className="text-[18px] font-semibold leading-none">
-                    {entry.label}
-                  </span>
-                  <span
+        {!bucketLocked && (
+          <div className="mb-4">
+            <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
+              Prvo izaberi grupu
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {BUCKET_OPTIONS.map((entry) => {
+                const selected = entry.value === spendBucket;
+                return (
+                  <button
+                    key={entry.value}
+                    type="button"
+                    onClick={() => pickBucket(entry.value)}
                     className={cn(
-                      "mt-1 text-[12px]",
-                      selected ? "text-accent-fg/80" : "text-ink-secondary",
+                      "flex min-h-14 flex-col items-center justify-center rounded-2xl px-3 transition-colors",
+                      selected
+                        ? "bg-accent text-accent-fg"
+                        : "bg-surface-2 text-ink",
                     )}
                   >
-                    {entry.hint}
-                  </span>
-                </button>
-              );
-            })}
+                    <span className="text-[18px] font-semibold leading-none">
+                      {entry.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-1 text-[12px]",
+                        selected ? "text-accent-fg/80" : "text-ink-secondary",
+                      )}
+                    >
+                      {entry.hint}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {spendBucket && (
           <div className="mb-4">
