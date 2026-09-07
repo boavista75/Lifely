@@ -1,14 +1,19 @@
-import { EMPTY_FINANCE_DATA } from "@/lib/finances";
 import { todayKey } from "@/lib/dates";
 import {
+  categoryIdFromLabel,
   currentMonthKey,
+  EMPTY_FINANCE_DATA,
+  findCategoryByLabel,
   inMonth,
   isDayLogged,
+  normalizeCategoryLabel,
   salaryForMonth,
 } from "@/lib/finances";
 import { loadFinances, saveFinances } from "@/lib/storage";
 import type {
   ExpenseCategory,
+  ExpenseCategoryDef,
+  ExpenseSpendBucket,
   FinanceBonus,
   FinanceBucket,
   FinanceData,
@@ -29,6 +34,11 @@ type FinancesState = FinanceData & {
     patch: Partial<Pick<FinanceExpense, "category" | "amount" | "date">>,
   ) => void;
   deleteExpense: (id: string) => void;
+  addCategory: (draft: {
+    label: string;
+    bucket: ExpenseSpendBucket;
+  }) => ExpenseCategoryDef | null;
+  deleteCategory: (id: string) => void;
   addBonus: (draft: {
     amount: number;
     bucket: FinanceBucket;
@@ -48,6 +58,7 @@ function persist(data: FinanceData): FinanceData {
     salaries: data.salaries,
     expenses: data.expenses,
     bonuses: data.bonuses,
+    categories: data.categories,
     confirmedLogDates: data.confirmedLogDates,
     dismissedSalaryMonth: data.dismissedSalaryMonth,
     dismissedExpenseDate: data.dismissedExpenseDate,
@@ -151,6 +162,35 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
       persist({
         ...get(),
         expenses: get().expenses.filter((entry) => entry.id !== id),
+      }),
+    );
+  },
+
+  addCategory: (draft) => {
+    const label = normalizeCategoryLabel(draft.label);
+    if (!label) return null;
+    const state = get();
+    const existing = findCategoryByLabel(label, draft.bucket, state.categories);
+    if (existing) return existing;
+    const category: ExpenseCategoryDef = {
+      id: categoryIdFromLabel(
+        label,
+        state.categories.map((entry) => entry.id),
+      ),
+      label,
+      bucket: draft.bucket,
+    };
+    set(persist({ ...state, categories: [...state.categories, category] }));
+    return category;
+  },
+
+  deleteCategory: (id) => {
+    const state = get();
+    set(
+      persist({
+        ...state,
+        categories: state.categories.filter((entry) => entry.id !== id),
+        expenses: state.expenses.filter((entry) => entry.category !== id),
       }),
     );
   },

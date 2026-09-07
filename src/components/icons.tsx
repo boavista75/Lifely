@@ -68,6 +68,17 @@ export function IconFinances(props: IconProps) {
   );
 }
 
+export function IconApp(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+    </svg>
+  );
+}
+
 export function IconLock(props: IconProps) {
   return (
     <svg {...base(props)}>

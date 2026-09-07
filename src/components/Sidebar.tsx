@@ -1,11 +1,14 @@
 import { BrandLockup } from "@/components/ThemeToggle";
 import { KbExplorer } from "@/components/KbExplorer";
+import { IconApp } from "@/components/icons";
 import { TABS } from "@/nav";
 import { cn } from "@/lib/cn";
 import { snappySpring } from "@/lib/motion";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useUiStore } from "@/store/useUiStore";
 import { motion, useReducedMotion } from "motion/react";
+
+const CINOMNIA_URL = "http://127.0.0.1/cinomnia/index.php";
 
 export function Sidebar() {
   const tab = useUiStore((state) => state.tab);
@@ -21,7 +24,7 @@ export function Sidebar() {
       style={{ width }}
       className="relative z-10 hidden h-full min-w-0 shrink-0 flex-col px-3 md:flex"
     >
-      <div className="page-header px-3">
+      <div className="page-header px-3 pt-8">
         <BrandLockup />
       </div>
       <nav
@@ -55,6 +58,27 @@ export function Sidebar() {
             </button>
           );
         })}
+      </nav>
+      <div
+        role="separator"
+        className="mt-4 mb-1 flex items-center gap-2 px-3"
+      >
+        <span className="h-px min-w-3 flex-1 bg-hairline" />
+        <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
+          apps
+        </span>
+        <span className="h-px min-w-3 flex-1 bg-hairline" />
+      </div>
+      <nav aria-label="Aplikacije" className="flex shrink-0 flex-col gap-1">
+        <a
+          href={CINOMNIA_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative flex min-h-11 min-w-0 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium text-ink-secondary transition-colors duration-200 hover:text-ink"
+        >
+          <IconApp className="relative size-[22px] shrink-0" />
+          <span className="relative min-w-0 truncate">Cinomnia</span>
+        </a>
       </nav>
       {showKbTree ? <KbExplorer variant="sidebar" /> : null}
       <div {...handleProps}>

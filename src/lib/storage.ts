@@ -1,4 +1,4 @@
-import { EMPTY_FINANCE_DATA } from "@/lib/finances";
+import { EMPTY_FINANCE_DATA, EXPENSE_CATEGORIES } from "@/lib/finances";
 import { clampKbTextScale, KB_TEXT_SCALE_DEFAULT, isKbFile, isKbPage } from "@/lib/kb";
 import {
   clampSidebarWidth,
@@ -13,6 +13,8 @@ import {
 } from "@/lib/palettes";
 import type {
   ExpenseCategory,
+  ExpenseCategoryDef,
+  ExpenseSpendBucket,
   FinanceBonus,
   FinanceBucket,
   FinanceData,
@@ -34,17 +36,7 @@ const PALETTE_KEY = "lifely-palette";
 const FINANCES_KEY = "lifely-finances";
 
 const BUCKETS: FinanceBucket[] = ["needs", "wants", "savings"];
-const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  "stanarina",
-  "gorivo",
-  "racuni",
-  "nabavka",
-  "kafic",
-  "brza-hrana",
-  "bioskop",
-  "subskripcije",
-  "soping",
-];
+const SPEND_BUCKETS: ExpenseSpendBucket[] = ["needs", "wants"];
 
 const LEGACY_EXPENSE_CATEGORIES: Record<string, ExpenseCategory> = {
   nabavke: "nabavka",
@@ -348,14 +340,9 @@ function isExpense(value: unknown): value is FinanceExpense {
   if (!isRecord(value)) return false;
   const rawCategory =
     typeof value.category === "string"
-      ? (LEGACY_EXPENSE_CATEGORIES[value.category] ?? value.category)
+      ? (LEGACY_EXPENSE_CATEGORIES[value.category] ?? value.category.trim())
       : null;
-  if (
-    !rawCategory ||
-    !EXPENSE_CATEGORIES.includes(rawCategory as ExpenseCategory)
-  ) {
-    return false;
-  }
+  if (!rawCategory) return false;
   if (
     typeof value.id !== "string" ||
     !isPositiveAmount(value.amount) ||
@@ -366,6 +353,36 @@ function isExpense(value: unknown): value is FinanceExpense {
   }
   value.category = rawCategory;
   return true;
+}
+
+function isCategoryDef(value: unknown): value is ExpenseCategoryDef {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.label === "string" &&
+    value.label.trim().length > 0 &&
+    typeof value.bucket === "string" &&
+    SPEND_BUCKETS.includes(value.bucket as ExpenseSpendBucket)
+  );
+}
+
+function parseCategories(raw: unknown): ExpenseCategoryDef[] {
+  if (!Array.isArray(raw)) {
+    return EXPENSE_CATEGORIES.map((entry) => ({ ...entry }));
+  }
+  const seen = new Set<string>();
+  const categories: ExpenseCategoryDef[] = [];
+  for (const value of raw) {
+    if (!isCategoryDef(value) || seen.has(value.id)) continue;
+    seen.add(value.id);
+    categories.push({
+      id: value.id.trim(),
+      label: value.label.trim(),
+      bucket: value.bucket,
+    });
+  }
+  return categories;
 }
 
 function isBonus(value: unknown): value is FinanceBonus {
@@ -402,6 +419,7 @@ export function loadFinances(): FinanceData {
     const bonuses = Array.isArray(parsed.bonuses)
       ? parsed.bonuses.filter(isBonus)
       : [];
+    const categories = parseCategories(parsed.categories);
     const confirmedLogDates = Array.isArray(parsed.confirmedLogDates)
       ? parsed.confirmedLogDates.filter(
           (value): value is string => isDateKey(value),
@@ -411,6 +429,7 @@ export function loadFinances(): FinanceData {
       salaries,
       expenses,
       bonuses,
+      categories,
       confirmedLogDates: [...new Set(confirmedLogDates)],
       dismissedSalaryMonth: isMonthKey(parsed.dismissedSalaryMonth)
         ? parsed.dismissedSalaryMonth

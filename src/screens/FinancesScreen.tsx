@@ -373,7 +373,7 @@ function BalanceCard({ summary }: { summary: MonthSummary }) {
       </div>
       <div className="mt-5 pt-5 hairline-t">
         <p className="text-[13px] font-medium text-ink-secondary">
-          Ostalo Dina + Visa
+          Bez ušteđevine ostalo
         </p>
         <p
           className={cn(
@@ -383,7 +383,6 @@ function BalanceCard({ summary }: { summary: MonthSummary }) {
         >
           {formatRsd(summary.cardsRemaining)}
         </p>
-        <p className="mt-1.5 text-[13px] text-ink-tertiary">Bez ušteđevine</p>
       </div>
     </div>
   );
@@ -475,9 +474,10 @@ function BucketDetail({
   const fill =
     allocated > 0 ? Math.max(0, Math.min(1, remaining / allocated)) : 0;
   const locked = bucket === "savings";
-  const cats = categoriesForBucket(bucket);
-  const expenses = summary.expenses.filter(
-    (entry) => categoryMeta(entry.category).bucket === bucket,
+  const categories = useFinancesStore((state) => state.categories);
+  const cats = categoriesForBucket(bucket, categories);
+  const expenses = summary.expenses.filter((entry) =>
+    categories.some((cat) => cat.id === entry.category && cat.bucket === bucket),
   );
   const bonuses = summary.bonuses.filter((entry) => entry.bucket === bucket);
   const deleteExpense = useFinancesStore((state) => state.deleteExpense);
@@ -597,6 +597,7 @@ function BucketDetail({
             <ExpenseRow
               key={entry.id}
               expense={entry}
+              label={categoryMeta(entry.category, categories).label}
               onOpen={() => onEditExpense(entry.id)}
               onDelete={() => setPending({ kind: "expense", id: entry.id })}
             />
@@ -646,10 +647,12 @@ function BucketDetail({
 
 function ExpenseRow({
   expense,
+  label,
   onOpen,
   onDelete,
 }: {
   expense: FinanceExpense;
+  label: string;
   onOpen: () => void;
   onDelete: () => void;
 }) {
@@ -657,7 +660,7 @@ function ExpenseRow({
     <div className="card flex items-center gap-3 rounded-[20px] px-4 py-3">
       <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <p className="text-[15px] font-medium">
-          {categoryMeta(expense.category).label}
+          {label}
         </p>
         <p className="text-[12px] text-ink-secondary">
           {formatExpenseDate(expense.date)}

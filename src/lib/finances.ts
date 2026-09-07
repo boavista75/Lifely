@@ -1,6 +1,8 @@
 import { monthKey, monthName, monthTitle, parseDateKey } from "@/lib/dates";
 import type {
   ExpenseCategory,
+  ExpenseCategoryDef,
+  ExpenseSpendBucket,
   FinanceBonus,
   FinanceBucket,
   FinanceData,
@@ -8,10 +10,25 @@ import type {
   FinanceSalary,
 } from "@/types";
 
+export const CATEGORY_LABEL_MAX = 40;
+
+export const EXPENSE_CATEGORIES: ExpenseCategoryDef[] = [
+  { id: "stanarina", label: "Stanarina", bucket: "needs" },
+  { id: "gorivo", label: "Gorivo", bucket: "needs" },
+  { id: "racuni", label: "Računi", bucket: "needs" },
+  { id: "nabavka", label: "Nabavka", bucket: "needs" },
+  { id: "kafic", label: "Kafić", bucket: "wants" },
+  { id: "brza-hrana", label: "Brza hrana", bucket: "wants" },
+  { id: "bioskop", label: "Bioskop", bucket: "wants" },
+  { id: "subskripcije", label: "Subskripcije", bucket: "wants" },
+  { id: "soping", label: "Šoping", bucket: "wants" },
+];
+
 export const EMPTY_FINANCE_DATA: FinanceData = {
   salaries: [],
   expenses: [],
   bonuses: [],
+  categories: EXPENSE_CATEGORIES.map((entry) => ({ ...entry })),
   confirmedLogDates: [],
   dismissedSalaryMonth: null,
   dismissedExpenseDate: null,
@@ -29,52 +46,29 @@ export const BUCKETS: {
 }[] = [
   {
     id: "needs",
-    label: "Dina kartica",
-    shortLabel: "Dina",
-    subtitle: "Hausings — stanarina, gorivo, računi, nabavka",
+    label: "Housings",
+    shortLabel: "Housings",
+    subtitle: "Stanarina, gorivo, računi, nabavka",
     ratio: 0.5,
     percent: "50%",
   },
   {
     id: "wants",
-    label: "Visa kartica",
-    shortLabel: "Visa",
+    label: "funnymoney",
+    shortLabel: "funnymoney",
     subtitle: "Kafić, brza hrana, bioskop, subskripcije, šoping",
     ratio: 0.3,
     percent: "30%",
   },
   {
     id: "savings",
-    label: "Dizati keš",
-    shortLabel: "Keš",
-    subtitle: "Ušteđevina",
+    label: "Ušteđevina",
+    shortLabel: "Ušteđevina",
+    subtitle: "Zaključano — ne troši se",
     ratio: 0.2,
     percent: "20%",
   },
 ];
-
-export const EXPENSE_CATEGORIES: {
-  id: ExpenseCategory;
-  label: string;
-  bucket: Exclude<FinanceBucket, "savings">;
-}[] = [
-  { id: "stanarina", label: "Stanarina", bucket: "needs" },
-  { id: "gorivo", label: "Gorivo", bucket: "needs" },
-  { id: "racuni", label: "Računi", bucket: "needs" },
-  { id: "nabavka", label: "Nabavka", bucket: "needs" },
-  { id: "kafic", label: "Kafić", bucket: "wants" },
-  { id: "brza-hrana", label: "Brza hrana", bucket: "wants" },
-  { id: "bioskop", label: "Bioskop", bucket: "wants" },
-  { id: "subskripcije", label: "Subskripcije", bucket: "wants" },
-  { id: "soping", label: "Šoping", bucket: "wants" },
-];
-
-const CATEGORY_BY_ID = Object.fromEntries(
-  EXPENSE_CATEGORIES.map((entry) => [entry.id, entry]),
-) as Record<
-  ExpenseCategory,
-  { id: ExpenseCategory; label: string; bucket: Exclude<FinanceBucket, "savings"> }
->;
 
 const BUCKET_BY_ID = Object.fromEntries(
   BUCKETS.map((entry) => [entry.id, entry]),
@@ -88,12 +82,78 @@ export function bucketMeta(id: FinanceBucket) {
   return BUCKET_BY_ID[id];
 }
 
-export function categoryMeta(id: ExpenseCategory) {
-  return CATEGORY_BY_ID[id];
+export function resolveCategories(
+  categories: readonly ExpenseCategoryDef[] | undefined,
+): ExpenseCategoryDef[] {
+  if (!categories) return EXPENSE_CATEGORIES.map((entry) => ({ ...entry }));
+  return [...categories];
 }
 
-export function categoriesForBucket(bucket: FinanceBucket) {
-  return EXPENSE_CATEGORIES.filter((entry) => entry.bucket === bucket);
+function categoryById(
+  categories: readonly ExpenseCategoryDef[],
+): Record<string, ExpenseCategoryDef> {
+  return Object.fromEntries(categories.map((entry) => [entry.id, entry]));
+}
+
+export function categoryMeta(
+  id: ExpenseCategory,
+  categories: readonly ExpenseCategoryDef[],
+): ExpenseCategoryDef {
+  return (
+    categoryById(categories)[id] ?? {
+      id,
+      label: id,
+      bucket: "needs",
+    }
+  );
+}
+
+export function categoriesForBucket(
+  bucket: FinanceBucket,
+  categories: readonly ExpenseCategoryDef[],
+) {
+  return categories.filter((entry) => entry.bucket === bucket);
+}
+
+export function normalizeCategoryLabel(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ").slice(0, CATEGORY_LABEL_MAX);
+}
+
+export function categoryIdFromLabel(
+  label: string,
+  used: Iterable<string>,
+): string {
+  const taken = used instanceof Set ? used : new Set(used);
+  const base =
+    label
+      .trim()
+      .toLocaleLowerCase("sr-Latn")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, CATEGORY_LABEL_MAX) || "kategorija";
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+export function findCategoryByLabel(
+  label: string,
+  bucket: ExpenseSpendBucket,
+  categories: readonly ExpenseCategoryDef[],
+): ExpenseCategoryDef | undefined {
+  const normalized = normalizeCategoryLabel(label);
+  if (!normalized) return undefined;
+  return categories.find(
+    (entry) =>
+      entry.bucket === bucket &&
+      entry.label.localeCompare(normalized, "sr-Latn", {
+        sensitivity: "base",
+      }) === 0,
+  );
 }
 
 export function currentMonthKey(): string {
@@ -156,10 +216,10 @@ function emptyBuckets(): Record<FinanceBucket, number> {
   return { needs: 0, wants: 0, savings: 0 };
 }
 
-function emptyCategories(): Record<ExpenseCategory, number> {
-  return Object.fromEntries(
-    EXPENSE_CATEGORIES.map((entry) => [entry.id, 0]),
-  ) as Record<ExpenseCategory, number>;
+function emptyCategories(
+  categories: readonly ExpenseCategoryDef[],
+): Record<ExpenseCategory, number> {
+  return Object.fromEntries(categories.map((entry) => [entry.id, 0]));
 }
 
 export function inMonth(dateKey: string, month: string): boolean {
@@ -167,6 +227,8 @@ export function inMonth(dateKey: string, month: string): boolean {
 }
 
 export function summarizeMonth(month: string, data: FinanceData): MonthSummary {
+  const categories = resolveCategories(data.categories);
+  const byId = categoryById(categories);
   const salary = data.salaries.find((entry) => entry.month === month)?.amount ?? 0;
   const expenses = data.expenses
     .filter((entry) => inMonth(entry.date, month))
@@ -182,11 +244,12 @@ export function summarizeMonth(month: string, data: FinanceData): MonthSummary {
   for (const bonus of bonuses) bonusByBucket[bonus.bucket] += bonus.amount;
 
   const spentByBucket = emptyBuckets();
-  const spentByCategory = emptyCategories();
+  const spentByCategory = emptyCategories(categories);
   for (const expense of expenses) {
-    const bucket = CATEGORY_BY_ID[expense.category].bucket;
-    spentByBucket[bucket] += expense.amount;
-    spentByCategory[expense.category] += expense.amount;
+    const bucket = byId[expense.category]?.bucket;
+    if (bucket) spentByBucket[bucket] += expense.amount;
+    spentByCategory[expense.category] =
+      (spentByCategory[expense.category] ?? 0) + expense.amount;
   }
 
   const remainingByBucket: Record<FinanceBucket, number> = {

@@ -26,10 +26,13 @@ export function FinanceConfirm({
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") {
+        event.stopImmediatePropagation();
+        onCancel();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [open, onCancel]);
 
   return (

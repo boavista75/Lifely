@@ -1,9 +1,22 @@
+import { FinanceConfirm } from "@/components/FinanceConfirm";
+import { IconClose, IconPlus } from "@/components/icons";
 import { Sheet } from "@/components/Sheet";
 import { cn } from "@/lib/cn";
 import { dateKeyInMonth, todayKey } from "@/lib/dates";
-import { categoriesForBucket, categoryMeta, parseAmount } from "@/lib/finances";
+import {
+  BUCKETS,
+  CATEGORY_LABEL_MAX,
+  categoriesForBucket,
+  categoryMeta,
+  parseAmount,
+} from "@/lib/finances";
 import { useFinancesStore } from "@/store/useFinancesStore";
-import type { ExpenseCategory, FinanceBucket, FinanceExpense } from "@/types";
+import type {
+  ExpenseCategory,
+  ExpenseCategoryDef,
+  FinanceBucket,
+  FinanceExpense,
+} from "@/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type SpendBucket = Exclude<FinanceBucket, "savings">;
@@ -16,10 +29,14 @@ type Props = {
   defaultMonth?: string;
 };
 
-const BUCKET_OPTIONS: { value: SpendBucket; label: string; hint: string }[] = [
-  { value: "needs", label: "50%", hint: "Dina · hausings" },
-  { value: "wants", label: "30%", hint: "Visa · izlazci" },
-];
+const BUCKET_OPTIONS = BUCKETS.filter(
+  (entry): entry is (typeof BUCKETS)[number] & { id: SpendBucket } =>
+    entry.id !== "savings",
+).map((entry) => ({
+  value: entry.id,
+  label: entry.percent,
+  hint: entry.shortLabel,
+}));
 
 export function ExpenseSheet({ open, onClose, bucket, existing, defaultMonth }: Props) {
   return (
@@ -48,16 +65,20 @@ function ExpenseForm({
   defaultMonth?: string;
   onClose: () => void;
 }) {
+  const categories = useFinancesStore((state) => state.categories);
+  const expenses = useFinancesStore((state) => state.expenses);
   const addExpense = useFinancesStore((state) => state.addExpense);
   const updateExpense = useFinancesStore((state) => state.updateExpense);
+  const addCategory = useFinancesStore((state) => state.addCategory);
+  const deleteCategory = useFinancesStore((state) => state.deleteCategory);
   const [spendBucket, setSpendBucket] = useState<SpendBucket | null>(
     existing
-      ? categoryMeta(existing.category).bucket
+      ? categoryMeta(existing.category, categories).bucket
       : (bucket ?? null),
   );
   const options = useMemo(
-    () => (spendBucket ? categoriesForBucket(spendBucket) : []),
-    [spendBucket],
+    () => (spendBucket ? categoriesForBucket(spendBucket, categories) : []),
+    [spendBucket, categories],
   );
   const [category, setCategory] = useState<ExpenseCategory | null>(
     existing?.category ?? null,
@@ -71,7 +92,13 @@ function ExpenseForm({
   const bucketLocked = Boolean(bucket);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryLabel, setNewCategoryLabel] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<ExpenseCategoryDef | null>(
+    null,
+  );
   const amountRef = useRef<HTMLInputElement>(null);
+  const newCategoryRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!category) return;
@@ -79,18 +106,52 @@ function ExpenseForm({
     return () => window.clearTimeout(id);
   }, [category]);
 
+  useEffect(() => {
+    if (!addingCategory) return;
+    const id = window.setTimeout(() => newCategoryRef.current?.focus(), 40);
+    return () => window.clearTimeout(id);
+  }, [addingCategory]);
+
   function pickBucket(next: SpendBucket) {
     setSpendBucket(next);
     setCategory((current) => {
       if (!current) return null;
-      return categoryMeta(current).bucket === next ? current : null;
+      return categoryMeta(current, categories).bucket === next ? current : null;
     });
+    setAddingCategory(false);
+    setNewCategoryLabel("");
+    setError(null);
+  }
+
+  function submitNewCategory() {
+    if (!spendBucket) return;
+    const created = addCategory({
+      label: newCategoryLabel,
+      bucket: spendBucket,
+    });
+    if (!created) {
+      setError("Unesite naziv kategorije");
+      newCategoryRef.current?.focus();
+      return;
+    }
+    setCategory(created.id);
+    setAddingCategory(false);
+    setNewCategoryLabel("");
+    setError(null);
+  }
+
+  function confirmDeleteCategory() {
+    if (!pendingDelete) return;
+    const removedId = pendingDelete.id;
+    deleteCategory(removedId);
+    if (category === removedId) setCategory(null);
+    setPendingDelete(null);
     setError(null);
   }
 
   function save() {
     if (!spendBucket) {
-      setError("Izaberite 50% ili 30%");
+      setError("Izaberite grupu");
       return;
     }
     if (!category) {
@@ -116,6 +177,10 @@ function ExpenseForm({
     }
     onClose();
   }
+
+  const pendingDeleteCount = pendingDelete
+    ? expenses.filter((entry) => entry.category === pendingDelete.id).length
+    : 0;
 
   return (
     <form
@@ -196,25 +261,101 @@ function ExpenseForm({
               {options.map((entry) => {
                 const selected = entry.id === category;
                 return (
-                  <button
+                  <div
                     key={entry.id}
-                    type="button"
-                    onClick={() => {
-                      setCategory(entry.id);
-                      if (error) setError(null);
-                    }}
                     className={cn(
-                      "min-h-10 rounded-full px-3.5 text-[13px] font-medium transition-colors",
+                      "flex min-h-10 items-center rounded-full pl-3.5 transition-colors",
                       selected
                         ? "bg-accent text-accent-fg"
                         : "bg-surface-2 text-ink-secondary",
                     )}
                   >
-                    {entry.label}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCategory(entry.id);
+                        setAddingCategory(false);
+                        setNewCategoryLabel("");
+                        if (error) setError(null);
+                      }}
+                      className="min-h-10 text-[13px] font-medium"
+                    >
+                      {entry.label}
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Obriši kategoriju ${entry.label}`}
+                      onClick={() => setPendingDelete(entry)}
+                      className={cn(
+                        "grid size-8 shrink-0 place-items-center rounded-full",
+                        selected ? "text-accent-fg/75" : "text-ink-tertiary",
+                      )}
+                    >
+                      <IconClose className="size-3.5" />
+                    </button>
+                  </div>
                 );
               })}
+              {!addingCategory && (
+                <button
+                  type="button"
+                  aria-label="Nova kategorija"
+                  onClick={() => {
+                    setAddingCategory(true);
+                    setNewCategoryLabel("");
+                    if (error) setError(null);
+                  }}
+                  className="flex min-h-10 items-center gap-1 rounded-full bg-surface-2 px-3.5 text-[13px] font-medium text-ink-secondary"
+                >
+                  <IconPlus className="size-3.5" />
+                  Nova
+                </button>
+              )}
             </div>
+            {addingCategory && (
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  ref={newCategoryRef}
+                  value={newCategoryLabel}
+                  onChange={(event) => {
+                    setNewCategoryLabel(event.target.value);
+                    if (error) setError(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      submitNewCategory();
+                    }
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setAddingCategory(false);
+                      setNewCategoryLabel("");
+                    }
+                  }}
+                  placeholder="Naziv kategorije"
+                  maxLength={CATEGORY_LABEL_MAX}
+                  className="field min-w-0 flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={submitNewCategory}
+                  className="pressable shrink-0 rounded-full px-3 text-[14px] font-semibold text-accent"
+                >
+                  Dodaj
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingCategory(false);
+                    setNewCategoryLabel("");
+                  }}
+                  className="pressable shrink-0 rounded-full px-2 text-[14px] text-ink-secondary"
+                >
+                  Otkaži
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -261,6 +402,20 @@ function ExpenseForm({
           </p>
         )}
       </div>
+
+      <FinanceConfirm
+        open={pendingDelete !== null}
+        title="Obrisati kategoriju?"
+        body={
+          pendingDeleteCount > 0
+            ? `„${pendingDelete?.label}“ i ${pendingDeleteCount === 1 ? "1 povezani trošak" : `${pendingDeleteCount} povezanih troškova`} će biti uklonjeni.`
+            : `„${pendingDelete?.label ?? ""}“ će biti uklonjena iz liste.`
+        }
+        confirmLabel="Obriši"
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDeleteCategory}
+      />
     </form>
   );
 }

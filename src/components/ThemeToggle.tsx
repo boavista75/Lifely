@@ -35,9 +35,11 @@ export function ThemeToggle() {
 
 export function BrandLockup() {
   return (
-    <div className="flex min-h-11 min-w-0 items-center justify-between gap-3">
-      <span className="page-title min-w-0 truncate">Lifely</span>
-      <div className="flex shrink-0 items-center gap-1">
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <span className="page-title flex h-12 shrink-0 items-center overflow-visible">
+        Lifely
+      </span>
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         <AppearanceButton />
         <ThemeToggle />
       </div>
