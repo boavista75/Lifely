@@ -243,6 +243,15 @@ export function IconVideo(props: IconProps) {
   );
 }
 
+export function IconYoutube(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="6.5" width="18" height="11" rx="3" />
+      <path d="M10.5 9.5v5l5-2.5-5-2.5Z" />
+    </svg>
+  );
+}
+
 export function IconCrop(props: IconProps) {
   return (
     <svg {...base(props)}>

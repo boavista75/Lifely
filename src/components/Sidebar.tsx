@@ -1,6 +1,6 @@
 import { BrandLockup } from "@/components/ThemeToggle";
 import { KbExplorer } from "@/components/KbExplorer";
-import { IconApp } from "@/components/icons";
+import { IconApp, IconYoutube } from "@/components/icons";
 import { TABS } from "@/nav";
 import { cn } from "@/lib/cn";
 import { snappySpring } from "@/lib/motion";
@@ -9,6 +9,7 @@ import { useUiStore } from "@/store/useUiStore";
 import { motion, useReducedMotion } from "motion/react";
 
 const CINOMNIA_URL = "http://127.0.0.1/cinomnia/index.php";
+const YOUTUBE_URL = "https://www.youtube.com/@boavista75";
 
 export function Sidebar() {
   const tab = useUiStore((state) => state.tab);
@@ -78,6 +79,15 @@ export function Sidebar() {
         >
           <IconApp className="relative size-[22px] shrink-0" />
           <span className="relative min-w-0 truncate">Cinomnia</span>
+        </a>
+        <a
+          href={YOUTUBE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative flex min-h-11 min-w-0 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium text-ink-secondary transition-colors duration-200 hover:text-ink"
+        >
+          <IconYoutube className="relative size-[22px] shrink-0" />
+          <span className="relative min-w-0 truncate">YouTube</span>
         </a>
       </nav>
       {showKbTree ? <KbExplorer variant="sidebar" /> : null}
