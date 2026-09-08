@@ -1,11 +1,13 @@
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { KbPageLinkControl } from "@/components/KbPageLinkControl";
 import { IconChevron, IconPlus } from "@/components/icons";
 import { RichEditorToolbar, ToolGroup } from "@/components/RichEditorToolbar";
 import { RowDeleteButton } from "@/components/RowDeleteButton";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { NOTE_EXTENSIONS } from "@/lib/editor";
+import { useContentGate } from "@/hooks/useContentGate";
 import { noteCreatedTitle } from "@/lib/dates";
-import { isKbFile, isKbPage, pageIdFromHref } from "@/lib/kb";
+import { NOTE_EXTENSIONS } from "@/lib/editor";
+import { isKbFile, isKbPage, isWebHref, openWebHref, pageIdFromHref } from "@/lib/kb";
 import { tabTransition } from "@/lib/motion";
 import { displayNoteTitle, isBlankHtml, isDefaultNoteTitle, notePreview } from "@/lib/notes";
 import { useItemsStore } from "@/store/useItemsStore";
@@ -26,6 +28,7 @@ export function NotesScreen() {
   const closeNote = useUiStore((state) => state.closeNote);
   const requestDeleteNote = useUiStore((state) => state.requestDeleteNote);
   const active = notes.find((note) => note.id === activeNoteId) ?? null;
+  const paneReady = useContentGate(active ? active.id : "list", true);
 
   function createNote() {
     const note = addNote();
@@ -49,6 +52,8 @@ export function NotesScreen() {
     }
     closeNote();
   }
+
+  if (!paneReady) return <LoadingScreen />;
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -178,21 +183,29 @@ function NoteEditor({
     function onClick(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest("a");
-      const id = pageIdFromHref(anchor?.getAttribute("href"));
-      if (!id) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (saveTimer.current) window.clearTimeout(saveTimer.current);
-      const instance = editorRef.current;
-      if (instance && !instance.isDestroyed) {
-        updateNoteRef.current(noteId, { content: instance.getHTML() });
+      const href = anchor?.getAttribute("href");
+      const id = pageIdFromHref(href);
+      if (id) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        const instance = editorRef.current;
+        if (instance && !instance.isDestroyed) {
+          updateNoteRef.current(noteId, { content: instance.getHTML() });
+        }
+        const next = useKbStore
+          .getState()
+          .nodes.find(
+            (node) => node.id === id && (isKbPage(node) || isKbFile(node)),
+          );
+        if (next) openLinkedRef.current(next.id, next.parentId);
+        return;
       }
-      const next = useKbStore
-        .getState()
-        .nodes.find(
-          (node) => node.id === id && (isKbPage(node) || isKbFile(node)),
-        );
-      if (next) openLinkedRef.current(next.id, next.parentId);
+      if (isWebHref(href)) {
+        event.preventDefault();
+        event.stopPropagation();
+        openWebHref(href);
+      }
     }
     dom.addEventListener("click", onClick);
     return () => dom.removeEventListener("click", onClick);

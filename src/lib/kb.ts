@@ -19,6 +19,53 @@ export function pageIdFromHref(href: string | undefined | null): string | null {
   return id.length > 0 ? id : null;
 }
 
+export function isWebHref(href: string | undefined | null): href is string {
+  if (!href) return false;
+  try {
+    return isHttpUrl(new URL(href));
+  } catch {
+    return false;
+  }
+}
+
+function isHttpUrl(url: URL): boolean {
+  if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+  const host = url.hostname;
+  if (!host || host.includes("%") || /\s/.test(host)) return false;
+  if (host !== "localhost" && !host.includes(".")) return false;
+  return true;
+}
+
+export function normalizeWebHref(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  const withScheme = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (!isHttpUrl(url)) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+export function displayWebHref(href: string): string {
+  try {
+    const url = new URL(href);
+    const host = url.hostname.replace(/^www\./, "");
+    const path = url.pathname === "/" ? "" : url.pathname;
+    return `${host}${path}`;
+  } catch {
+    return href;
+  }
+}
+
+export function openWebHref(href: string) {
+  window.open(href, "_blank", "noopener,noreferrer");
+}
+
 export function displayKbTitle(title: string, createdAt?: string): string {
   return displayNoteTitle(title, createdAt);
 }

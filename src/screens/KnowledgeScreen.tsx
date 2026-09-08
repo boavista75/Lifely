@@ -5,7 +5,9 @@ import { KbMediaControl } from "@/components/KbMediaControl";
 import { KbPageLinkControl } from "@/components/KbPageLinkControl";
 import { KbTextScaleControl } from "@/components/KbTextScaleControl";
 import { RichEditorToolbar, ToolGroup } from "@/components/RichEditorToolbar";
+import { LoadingScreen } from "@/components/LoadingScreen";
 import { IconChevron, IconSearch } from "@/components/icons";
+import { useContentGate } from "@/hooks/useContentGate";
 import {
   findInEditor,
   KB_EXTENSIONS,
@@ -16,7 +18,9 @@ import {
   defaultPageTitle,
   isKbFile,
   isKbPage,
+  isWebHref,
   KB_TEXT_SCALE_DEFAULT,
+  openWebHref,
   pageIdFromHref,
 } from "@/lib/kb";
 import { isEditorKbFileName, isOfficeKbFile, isPdfKbFile } from "@/lib/kbFiles";
@@ -42,6 +46,7 @@ export function KnowledgeScreen() {
   const hydrateEditableFile = useKbStore((state) => state.hydrateEditableFile);
   const kbPageId = useUiStore((state) => state.kbPageId);
   const node = nodes.find((entry) => entry.id === kbPageId);
+  const paneReady = useContentGate(kbPageId ?? "root", true);
 
   useEffect(() => {
     if (
@@ -54,38 +59,24 @@ export function KnowledgeScreen() {
     }
   }, [hydrateEditableFile, node]);
 
+  if (!paneReady) return <LoadingScreen />;
+
   if (node && isKbFile(node) && isEditorKbFileName(node.title)) {
     if (node.content === null) {
-      return (
-        <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
-          Učitavanje…
-        </p>
-      );
+      return <LoadingScreen />;
     }
     return <KbPageEditor key={node.id} nodeId={node.id} />;
   }
   if (node && isKbFile(node) && isPdfKbFile(node)) {
     return (
-      <Suspense
-        fallback={
-          <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
-            Učitavanje…
-          </p>
-        }
-      >
+      <Suspense fallback={<LoadingScreen />}>
         <KbPdfEditor key={node.id} fileId={node.id} />
       </Suspense>
     );
   }
   if (node && isKbFile(node) && isOfficeKbFile(node) && node.mediaId) {
     return (
-      <Suspense
-        fallback={
-          <p className="grid h-full place-items-center text-[15px] text-ink-secondary">
-            Učitavanje…
-          </p>
-        }
-      >
+      <Suspense fallback={<LoadingScreen />}>
         <KbOfficeViewer key={node.id} fileId={node.id} />
       </Suspense>
     );
@@ -189,21 +180,30 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
     function onClick(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
       const anchor = target?.closest("a");
-      const id = pageIdFromHref(anchor?.getAttribute("href"));
-      if (!id || id === nodeId) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (saveTimer.current) window.clearTimeout(saveTimer.current);
-      const instance = editorRef.current;
-      if (instance && !instance.isDestroyed) {
-        updateRef.current(nodeId, { content: instance.getHTML() });
+      const href = anchor?.getAttribute("href");
+      const id = pageIdFromHref(href);
+      if (id) {
+        if (id === nodeId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (saveTimer.current) window.clearTimeout(saveTimer.current);
+        const instance = editorRef.current;
+        if (instance && !instance.isDestroyed) {
+          updateRef.current(nodeId, { content: instance.getHTML() });
+        }
+        const next = useKbStore
+          .getState()
+          .nodes.find(
+            (node) => node.id === id && (isKbPage(node) || isKbFile(node)),
+          );
+        if (next) openPageRef.current(next.id, next.parentId);
+        return;
       }
-      const next = useKbStore
-        .getState()
-        .nodes.find(
-          (node) => node.id === id && (isKbPage(node) || isKbFile(node)),
-        );
-      if (next) openPageRef.current(next.id, next.parentId);
+      if (isWebHref(href)) {
+        event.preventDefault();
+        event.stopPropagation();
+        openWebHref(href);
+      }
     }
     dom.addEventListener("click", onClick);
     return () => dom.removeEventListener("click", onClick);

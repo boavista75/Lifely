@@ -10,6 +10,8 @@ import {
 } from "@/lib/kb";
 import { convertDocumentToHtml } from "@/lib/kbFilePreview";
 import { isEditorKbFileName, planKbImport } from "@/lib/kbFiles";
+import { mergeAlpineSeasonKb } from "@/lib/alpineSeasonSeed";
+import { mergeFreestyleSeasonKb } from "@/lib/freestyleSeasonSeed";
 import { deleteMedia, loadMedia, saveMediaMany } from "@/lib/media";
 import { loadKb, saveKb } from "@/lib/storage";
 import { useItemsStore } from "@/store/useItemsStore";
@@ -18,6 +20,7 @@ import { create } from "zustand";
 
 type KbState = {
   nodes: LifelyKbNode[];
+  hydrate: () => void;
   addFolder: (parentId: string | null) => LifelyKbFolder;
   addPage: (parentId: string | null) => LifelyKbPage;
   importFiles: (
@@ -40,6 +43,8 @@ type KbState = {
   ) => void;
   deleteNode: (id: string) => string[];
   moveNode: (id: string, parentId: string | null) => boolean;
+  ensureAlpineSeason: () => void;
+  ensureFreestyleSeason: () => void;
 };
 
 function persist(nodes: LifelyKbNode[]): LifelyKbNode[] {
@@ -74,7 +79,9 @@ function loadLiveKb(): LifelyKbNode[] {
 }
 
 export const useKbStore = create<KbState>((set, get) => ({
-  nodes: loadLiveKb(),
+  nodes: [],
+
+  hydrate: () => set({ nodes: loadLiveKb() }),
 
   addFolder: (parentId) => {
     const created = new Date();
@@ -190,5 +197,17 @@ export const useKbStore = create<KbState>((set, get) => ({
     if (!next) return false;
     set({ nodes: persist(next) });
     return true;
+  },
+
+  ensureAlpineSeason: () => {
+    const { nodes, added } = mergeAlpineSeasonKb(get().nodes);
+    if (added === 0) return;
+    set({ nodes: persist(nodes) });
+  },
+
+  ensureFreestyleSeason: () => {
+    const { nodes, added } = mergeFreestyleSeasonKb(get().nodes);
+    if (added === 0) return;
+    set({ nodes: persist(nodes) });
   },
 }));

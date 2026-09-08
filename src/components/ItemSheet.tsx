@@ -1,3 +1,4 @@
+import { SportCheck } from "@/components/SportCheck";
 import { KbPagePicker } from "@/components/KbPagePicker";
 import { NotePicker } from "@/components/NotePicker";
 import { SegmentedControl } from "@/components/SegmentedControl";
@@ -68,6 +69,7 @@ function ItemForm({
   const [kbPageId, setKbPageId] = useState<string | null>(
     existing?.kbPageId ?? null,
   );
+  const [sport, setSport] = useState(existing?.sport ?? false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
@@ -113,6 +115,7 @@ function ItemForm({
         endTime: end,
         noteId,
         kbPageId,
+        sport,
       });
     } else {
       updateItem(itemSheet.id, {
@@ -123,6 +126,7 @@ function ItemForm({
         endTime: end,
         noteId,
         kbPageId,
+        sport,
       });
     }
     closeItemSheet();
@@ -230,6 +234,8 @@ function ItemForm({
             )}
           </div>
         )}
+
+        <SportCheck checked={sport} onChange={setSport} />
 
         <NotePicker value={noteId} onChange={setNoteId} />
         <KbPagePicker value={kbPageId} onChange={setKbPageId} />

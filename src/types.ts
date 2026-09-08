@@ -15,6 +15,7 @@ export interface LifelyItem {
   startTime: string | null;
   endTime: string | null;
   completed: boolean;
+  sport: boolean;
   noteId: string | null;
   kbPageId: string | null;
   createdAt: string;
@@ -28,6 +29,7 @@ export type ItemDraft = {
   startTime: string | null;
   endTime: string | null;
   completed?: boolean;
+  sport?: boolean;
   noteId?: string | null;
   kbPageId?: string | null;
 };

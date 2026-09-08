@@ -23,6 +23,7 @@ import type {
 import { create } from "zustand";
 
 type FinancesState = FinanceData & {
+  hydrate: () => void;
   setSalary: (month: string, amount: number) => { overwritten: boolean };
   addExpense: (draft: {
     category: ExpenseCategory;
@@ -74,7 +75,9 @@ function nowIso(): string {
 }
 
 export const useFinancesStore = create<FinancesState>((set, get) => ({
-  ...loadFinances(),
+  ...EMPTY_FINANCE_DATA,
+
+  hydrate: () => set({ ...loadFinances() }),
 
   setSalary: (month, amount) => {
     const state = get();

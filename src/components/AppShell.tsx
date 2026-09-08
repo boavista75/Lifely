@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="px-5 pt-[max(12px,env(safe-area-inset-top))] md:hidden">
           <BrandLockup />
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="relative min-h-0 flex-1 overflow-hidden pb-[calc(88px+env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </div>
         <TabBar />

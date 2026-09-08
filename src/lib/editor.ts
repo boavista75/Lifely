@@ -1,3 +1,4 @@
+import { isWebHref } from "@/lib/kb";
 import { KbImage, KbMediaDrop, KbVideo } from "@/lib/kbMedia";
 import { Extension } from "@tiptap/core";
 import { Color, TextStyle } from "@tiptap/extension-text-style";
@@ -88,14 +89,12 @@ const EDITOR_LINK = {
   openOnClick: false,
   autolink: false,
   linkOnPaste: false,
-  protocols: [{ scheme: "kb", optionalSlashes: true }],
+  protocols: ["http", "https", { scheme: "kb", optionalSlashes: true }],
   HTMLAttributes: {
     class: "kb-page-link",
-    target: "_self",
     rel: "noopener noreferrer",
   },
-  isAllowedUri: (url: string, ctx: { defaultValidate: (url: string) => boolean }) =>
-    url.startsWith("kb://") || ctx.defaultValidate(url),
+  isAllowedUri: (url: string) => url.startsWith("kb://") || isWebHref(url),
 };
 
 export const NOTE_EXTENSIONS = [

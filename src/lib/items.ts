@@ -53,6 +53,14 @@ export function itemsOnDate(
   return sortDayItems(items.filter((item) => item.date === dateKey));
 }
 
+export function filterCalendarItems(
+  items: LifelyItem[],
+  showSport: boolean,
+): LifelyItem[] {
+  if (showSport) return items;
+  return items.filter((item) => !item.sport);
+}
+
 export function isValidRange(start: string, end: string): boolean {
   return timeToMinutes(end) > timeToMinutes(start);
 }

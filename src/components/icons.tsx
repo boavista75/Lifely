@@ -224,6 +224,24 @@ export function IconSearch(props: IconProps) {
   );
 }
 
+export function IconFilter(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 6.5h16l-6.2 7.4v5.6l-3.6-1.8v-3.8L4 6.5Z" />
+    </svg>
+  );
+}
+
+export function IconGlobe(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M3.75 12h16.5" />
+      <path d="M12 3.75c2.4 2.4 3.6 5.1 3.6 8.25s-1.2 5.85-3.6 8.25C9.6 17.85 8.4 15.15 8.4 12s1.2-5.85 3.6-8.25Z" />
+    </svg>
+  );
+}
+
 export function IconImage(props: IconProps) {
   return (
     <svg {...base(props)}>

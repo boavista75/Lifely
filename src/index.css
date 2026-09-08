@@ -104,6 +104,77 @@ body {
   background: var(--canvas);
 }
 
+.boot-screen,
+.pane-loader {
+  display: grid;
+  place-items: center;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  user-select: none;
+}
+
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.pane-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+.boot-screen__inner,
+.pane-loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+}
+
+.boot-screen__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.boot-screen__spinner,
+.pane-loader__spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-top-color: var(--accent);
+  animation: boot-spin 0.72s linear infinite;
+}
+
+.boot-screen__label,
+.pane-loader__label {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: -0.011em;
+  color: var(--ink-secondary);
+}
+
+@keyframes boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-screen__spinner,
+  .pane-loader__spinner {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
 input,
 select,
 textarea {

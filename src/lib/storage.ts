@@ -1,3 +1,14 @@
+import {
+  ALPINE_ITEM_PREFIX,
+  mergeAlpineSeasonItems,
+  mergeAlpineSeasonKb,
+} from "@/lib/alpineSeasonSeed";
+import {
+  FREESTYLE_ITEM_PREFIX,
+  mergeFreestyleSeasonItems,
+  mergeFreestyleSeasonKb,
+} from "@/lib/freestyleSeasonSeed";
+import { mergeNbaSeasonItems, NBA_ITEM_PREFIX } from "@/lib/nbaSeasonSeed";
 import { EMPTY_FINANCE_DATA, EXPENSE_CATEGORIES } from "@/lib/finances";
 import { clampKbTextScale, KB_TEXT_SCALE_DEFAULT, isKbFile, isKbPage } from "@/lib/kb";
 import {
@@ -30,6 +41,7 @@ const ITEMS_KEY = "lifely-items";
 const NOTES_KEY = "lifely-notes";
 const KB_KEY = "lifely-kb";
 const TAB_KEY = "lifely-tab";
+const SHOW_SPORT_KEY = "lifely-show-sport";
 const THEME_KEY = "lifely-theme";
 const SIDEBAR_WIDTH_KEY = "lifely-sidebar-width";
 const PALETTE_KEY = "lifely-palette";
@@ -55,9 +67,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function isItem(value: unknown): value is Omit<LifelyItem, "noteId" | "kbPageId"> & {
+function isSeededSportId(id: string): boolean {
+  return (
+    id.startsWith(NBA_ITEM_PREFIX) ||
+    id.startsWith(ALPINE_ITEM_PREFIX) ||
+    id.startsWith(FREESTYLE_ITEM_PREFIX)
+  );
+}
+
+function isItem(value: unknown): value is Omit<
+  LifelyItem,
+  "noteId" | "kbPageId" | "sport"
+> & {
   noteId?: string | null;
   kbPageId?: string | null;
+  sport?: boolean;
 } {
   if (!isRecord(value)) return false;
   return (
@@ -77,8 +101,24 @@ function isItem(value: unknown): value is Omit<LifelyItem, "noteId" | "kbPageId"
       typeof value.noteId === "string") &&
     (value.kbPageId === undefined ||
       value.kbPageId === null ||
-      typeof value.kbPageId === "string")
+      typeof value.kbPageId === "string") &&
+    (value.sport === undefined || typeof value.sport === "boolean")
   );
+}
+
+function withItemDefaults(
+  item: Omit<LifelyItem, "noteId" | "kbPageId" | "sport"> & {
+    noteId?: string | null;
+    kbPageId?: string | null;
+    sport?: boolean;
+  },
+): LifelyItem {
+  return {
+    ...item,
+    noteId: item.noteId ?? null,
+    kbPageId: item.kbPageId ?? null,
+    sport: item.sport ?? isSeededSportId(item.id),
+  };
 }
 
 function isNote(value: unknown): value is LifelyNote {
@@ -96,16 +136,30 @@ export function loadItems(): LifelyItem[] {
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(ITEMS_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isItem).map((item) => ({
-      ...item,
-      noteId: item.noteId ?? null,
-      kbPageId: item.kbPageId ?? null,
-    }));
+    let migrated = false;
+    const loaded: LifelyItem[] = raw
+      ? (() => {
+          const parsed: unknown = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(isItem).map((item) => {
+            if (typeof item.sport !== "boolean") migrated = true;
+            return withItemDefaults(item);
+          });
+        })()
+      : [];
+    const alpine = mergeAlpineSeasonItems(loaded);
+    const freestyle = mergeFreestyleSeasonItems(alpine.items);
+    const { items, added, removed } = mergeNbaSeasonItems(freestyle.items);
+    if (alpine.added + freestyle.added + added + removed > 0 || migrated) {
+      saveItems(items);
+    }
+    return items;
   } catch {
-    return [];
+    const alpine = mergeAlpineSeasonItems([]);
+    const freestyle = mergeFreestyleSeasonItems(alpine.items);
+    const { items, added, removed } = mergeNbaSeasonItems(freestyle.items);
+    if (alpine.added + freestyle.added + added + removed > 0) saveItems(items);
+    return items;
   }
 }
 
@@ -191,12 +245,22 @@ export function loadKb(): LifelyKbNode[] {
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(KB_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isKbNode).map(withTextScale);
+    const loaded: LifelyKbNode[] = raw
+      ? (() => {
+          const parsed: unknown = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(isKbNode).map(withTextScale);
+        })()
+      : [];
+    const alpine = mergeAlpineSeasonKb(loaded);
+    const { nodes, added } = mergeFreestyleSeasonKb(alpine.nodes);
+    if (alpine.added + added > 0) saveKb(nodes);
+    return nodes;
   } catch {
-    return [];
+    const alpine = mergeAlpineSeasonKb([]);
+    const { nodes, added } = mergeFreestyleSeasonKb(alpine.nodes);
+    if (alpine.added + added > 0) saveKb(nodes);
+    return nodes;
   }
 }
 
@@ -224,6 +288,27 @@ export function saveTab(tab: TabId): void {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(TAB_KEY, tab);
+  } catch {
+    // ignore
+  }
+}
+
+export function loadShowSport(): boolean {
+  if (typeof localStorage === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(SHOW_SPORT_KEY);
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+export function saveShowSport(show: boolean): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(SHOW_SPORT_KEY, show ? "true" : "false");
   } catch {
     // ignore
   }

@@ -1,4 +1,4 @@
-import { loadTab, saveTab } from "@/lib/storage";
+import { loadShowSport, loadTab, saveShowSport, saveTab } from "@/lib/storage";
 import { todayKey } from "@/lib/dates";
 import type { TabId } from "@/types";
 import { create } from "zustand";
@@ -19,6 +19,8 @@ type UiState = {
   setTab: (tab: TabId) => void;
   selectedDate: string;
   setSelectedDate: (date: string) => void;
+  showSport: boolean;
+  setShowSport: (show: boolean) => void;
   daySheetOpen: boolean;
   openDay: (date: string) => void;
   closeDay: () => void;
@@ -54,6 +56,11 @@ export const useUiStore = create<UiState>((set) => ({
   },
   selectedDate: todayKey(),
   setSelectedDate: (date) => set({ selectedDate: date }),
+  showSport: loadShowSport(),
+  setShowSport: (show) => {
+    saveShowSport(show);
+    set({ showSport: show });
+  },
   daySheetOpen: false,
   openDay: (date) => set({ selectedDate: date, daySheetOpen: true }),
   closeDay: () => set({ daySheetOpen: false }),

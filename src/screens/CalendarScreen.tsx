@@ -1,3 +1,4 @@
+import { CalendarFilters } from "@/components/CalendarFilters";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { IconChevron } from "@/components/icons";
 import {
@@ -14,7 +15,7 @@ import {
   weekKey,
   WEEKDAY_LETTERS,
 } from "@/lib/dates";
-import { sortDayItems } from "@/lib/items";
+import { filterCalendarItems, sortDayItems } from "@/lib/items";
 import { monthSlide, slideTransition } from "@/lib/motion";
 import { CalendarDragProvider } from "@/hooks/useCalendarItemDrag";
 import { MonthGrid, WeekGrid } from "@/screens/MonthGrid";
@@ -30,6 +31,7 @@ export function CalendarScreen() {
   const items = useItemsStore((state) => state.items);
   const selectedDate = useUiStore((state) => state.selectedDate);
   const setSelectedDate = useUiStore((state) => state.setSelectedDate);
+  const showSport = useUiStore((state) => state.showSport);
   const openDay = useUiStore((state) => state.openDay);
   const openNewItem = useUiStore((state) => state.openNewItem);
   const openEditItem = useUiStore((state) => state.openEditItem);
@@ -39,7 +41,10 @@ export function CalendarScreen() {
   const [cursor, setCursor] = useState(() => parseDateKey(selectedDate));
   const [direction, setDirection] = useState(0);
 
-  const itemsByDate = useMemo(() => groupByDate(items), [items]);
+  const itemsByDate = useMemo(
+    () => groupByDate(filterCalendarItems(items, showSport)),
+    [items, showSport],
+  );
   const monthDays = useMemo(() => getMonthGrid(cursor), [cursor]);
   const weekDays = useMemo(() => getWeekDays(cursor), [cursor]);
   const title = monthTitle(cursor);
@@ -112,16 +117,19 @@ export function CalendarScreen() {
         <p className="mt-2 font-display text-[24px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:hidden">
           {title}
         </p>
-        <div className="mt-4 mb-3 max-w-[280px]">
-          <SegmentedControl
-            value={view}
-            onChange={onViewChange}
-            options={[
-              { value: "month", label: "Mesec" },
-              { value: "week", label: "Nedelja" },
-            ]}
-            ariaLabel="Prikaz kalendara"
-          />
+        <div className="mt-4 mb-3 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 max-w-[280px]">
+            <SegmentedControl
+              value={view}
+              onChange={onViewChange}
+              options={[
+                { value: "month", label: "Mesec" },
+                { value: "week", label: "Nedelja" },
+              ]}
+              ariaLabel="Prikaz kalendara"
+            />
+          </div>
+          <CalendarFilters />
         </div>
       </header>
 

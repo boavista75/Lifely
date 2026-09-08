@@ -2,7 +2,7 @@ import { ItemRow } from "@/components/ItemRow";
 import { Sheet } from "@/components/Sheet";
 import { IconPlus } from "@/components/icons";
 import { fullDateTitle, parseDateKey } from "@/lib/dates";
-import { itemsOnDate } from "@/lib/items";
+import { filterCalendarItems, itemsOnDate } from "@/lib/items";
 import { useItemsStore } from "@/store/useItemsStore";
 import { useUiStore } from "@/store/useUiStore";
 import { AnimatePresence } from "motion/react";
@@ -14,7 +14,11 @@ export function DaySheet() {
   const openNewItem = useUiStore((state) => state.openNewItem);
   const openEditItem = useUiStore((state) => state.openEditItem);
   const items = useItemsStore((state) => state.items);
-  const dayItems = itemsOnDate(items, selectedDate);
+  const showSport = useUiStore((state) => state.showSport);
+  const dayItems = itemsOnDate(
+    filterCalendarItems(items, showSport),
+    selectedDate,
+  );
   const headingId = "day-sheet-title";
   const title = fullDateTitle(parseDateKey(selectedDate));
 

@@ -6,6 +6,7 @@ import { create } from "zustand";
 
 type NotesState = {
   notes: LifelyNote[];
+  hydrate: () => void;
   addNote: () => LifelyNote;
   updateNote: (id: string, patch: Partial<Pick<LifelyNote, "title" | "content">>) => void;
   deleteNote: (id: string) => void;
@@ -17,7 +18,9 @@ function persist(notes: LifelyNote[]): LifelyNote[] {
 }
 
 export const useNotesStore = create<NotesState>((set, get) => ({
-  notes: loadNotes(),
+  notes: [],
+
+  hydrate: () => set({ notes: loadNotes() }),
 
   addNote: () => {
     const created = new Date();

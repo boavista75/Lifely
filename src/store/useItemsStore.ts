@@ -1,15 +1,22 @@
+import { mergeAlpineSeasonItems } from "@/lib/alpineSeasonSeed";
+import { mergeFreestyleSeasonItems } from "@/lib/freestyleSeasonSeed";
+import { mergeNbaSeasonItems } from "@/lib/nbaSeasonSeed";
 import { loadItems, saveItems } from "@/lib/storage";
 import type { ItemDraft, LifelyItem } from "@/types";
 import { create } from "zustand";
 
 type ItemsState = {
   items: LifelyItem[];
+  hydrate: () => void;
   addItem: (draft: ItemDraft) => LifelyItem;
   updateItem: (id: string, patch: Partial<ItemDraft>) => void;
   toggleComplete: (id: string) => void;
   deleteItem: (id: string) => void;
   unlinkNote: (noteId: string) => void;
   unlinkKbPages: (pageIds: string[]) => void;
+  ensureAlpineSeason: () => void;
+  ensureFreestyleSeason: () => void;
+  ensureNbaSeason: () => void;
 };
 
 function persist(items: LifelyItem[]): LifelyItem[] {
@@ -18,7 +25,9 @@ function persist(items: LifelyItem[]): LifelyItem[] {
 }
 
 export const useItemsStore = create<ItemsState>((set, get) => ({
-  items: loadItems(),
+  items: [],
+
+  hydrate: () => set({ items: loadItems() }),
 
   addItem: (draft) => {
     const now = new Date().toISOString();
@@ -32,6 +41,7 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
       completed: draft.completed ?? false,
       noteId: draft.noteId ?? null,
       kbPageId: draft.kbPageId ?? null,
+      sport: draft.sport ?? false,
       createdAt: now,
       updatedAt: now,
     };
@@ -102,5 +112,23 @@ export const useItemsStore = create<ItemsState>((set, get) => ({
         ),
       ),
     });
+  },
+
+  ensureAlpineSeason: () => {
+    const { items, added } = mergeAlpineSeasonItems(get().items);
+    if (added === 0) return;
+    set({ items: persist(items) });
+  },
+
+  ensureFreestyleSeason: () => {
+    const { items, added } = mergeFreestyleSeasonItems(get().items);
+    if (added === 0) return;
+    set({ items: persist(items) });
+  },
+
+  ensureNbaSeason: () => {
+    const { items, added, removed } = mergeNbaSeasonItems(get().items);
+    if (added === 0 && removed === 0) return;
+    set({ items: persist(items) });
   },
 }));
