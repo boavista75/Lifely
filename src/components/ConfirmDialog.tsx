@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { dialogTransition } from "@/lib/motion";
 import { displayKbTitle } from "@/lib/kb";
 import { displayNoteTitle } from "@/lib/notes";
@@ -76,14 +77,14 @@ export function ConfirmDialog() {
 
   const title =
     confirmDelete?.kind === "note"
-      ? "Obrisati belešku?"
+      ? text("confirm.deleteNote")
       : confirmDelete?.kind === "kb-page"
-        ? "Obrisati stranicu?"
+        ? text("confirm.deletePage")
         : confirmDelete?.kind === "kb-folder"
-          ? "Obrisati folder?"
+          ? text("confirm.deleteFolder")
           : confirmDelete?.kind === "kb-file"
-            ? "Obrisati fajl?"
-            : "Obrisati stavku?";
+            ? text("confirm.deleteFile")
+            : text("confirm.deleteItem");
   const name =
     confirmDelete?.kind === "note"
       ? displayNoteTitle(note?.title ?? "", note?.createdAt)
@@ -94,10 +95,10 @@ export function ConfirmDialog() {
         : (item?.title ?? "");
   const body =
     confirmDelete?.kind === "kb-folder"
-      ? `„${name}“ i sav sadržaj unutra će biti uklonjeni.`
+      ? text("confirm.folderBody", { name })
       : confirmDelete?.kind === "kb-file"
-        ? `„${name}“ će biti uklonjen.`
-        : `„${name}“ će biti uklonjena.`;
+        ? text("confirm.fileBody", { name })
+        : text("confirm.namedBody", { name });
 
   return (
     <AnimatePresence>
@@ -105,7 +106,7 @@ export function ConfirmDialog() {
         <div className="fixed inset-0 z-[70] grid place-items-center px-6">
           <motion.button
             type="button"
-            aria-label="Zatvori"
+            aria-label={text("common.close")}
             className="absolute inset-0 bg-[var(--backdrop)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -140,14 +141,14 @@ export function ConfirmDialog() {
                 onClick={closeConfirm}
                 className="min-h-12 text-[16px] text-ink-secondary transition-colors duration-150 hover:bg-ink/[0.04]"
               >
-                Otkaži
+                {text("common.cancel")}
               </button>
               <button
                 type="button"
                 onClick={confirm}
                 className="min-h-12 text-[16px] font-semibold text-danger shadow-[-0.5px_0_0_0_var(--hairline)] transition-colors duration-150 hover:bg-danger/[0.06]"
               >
-                Obriši
+                {text("common.delete")}
               </button>
             </div>
           </motion.div>

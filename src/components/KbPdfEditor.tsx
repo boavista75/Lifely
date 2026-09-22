@@ -1,4 +1,5 @@
 import { IconChevron } from "@/components/icons";
+import { text } from "@/i18n";
 import { KbDownloadButton } from "@/components/KbDownloadButton";
 import { ToolButton } from "@/components/RichEditorToolbar";
 import { cn } from "@/lib/cn";
@@ -216,7 +217,7 @@ export function KbPdfEditor({ fileId }: { fileId: string }) {
           className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
         >
           <IconChevron className="size-5" />
-          Knowledge
+          {text("nav.knowledge")}
         </button>
         <div className="flex shrink-0 items-center">
           <KbDownloadButton
@@ -229,7 +230,7 @@ export function KbPdfEditor({ fileId }: { fileId: string }) {
             onClick={() => requestDeleteKb("kb-file", file.id)}
             className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
           >
-            Obriši
+            {text("common.delete")}
           </button>
         </div>
       </header>
@@ -241,7 +242,7 @@ export function KbPdfEditor({ fileId }: { fileId: string }) {
       <div className="shrink-0 px-3 pb-2 md:px-6">
         <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar rounded-2xl bg-surface-2/90 p-1">
           <ToolButton
-            label="Smanji"
+            label={text("kb.zoomOut")}
             disabled={zoom <= PDF_ZOOM_MIN}
             onClick={() => setZoom((current) => clampPdfZoom(current - PDF_ZOOM_STEP))}
           >
@@ -251,21 +252,21 @@ export function KbPdfEditor({ fileId }: { fileId: string }) {
             {Math.round(zoom * 100)}%
           </span>
           <ToolButton
-            label="Povećaj"
+            label={text("kb.zoomIn")}
             disabled={zoom >= PDF_ZOOM_MAX}
             onClick={() => setZoom((current) => clampPdfZoom(current + PDF_ZOOM_STEP))}
           >
             <span className="text-[18px] font-semibold leading-none">+</span>
           </ToolButton>
           <p className="ml-2 hidden text-[13px] text-ink-tertiary sm:block">
-            {lines.length > 0 ? "Klikni na tekst da ga izmeniš" : "Prilagodi veličinu stranice"}
+            {lines.length > 0 ? text("kb.pdfHint") : text("kb.pdfEmpty")}
           </p>
         </div>
       </div>
       <div className="relative min-h-0 flex-1 overflow-hidden px-3 pb-4 md:px-6">
         {loading ? (
           <p className="absolute inset-0 z-10 grid place-items-center text-[15px] text-ink-secondary">
-            Učitavanje…
+            {text("common.loading")}
           </p>
         ) : null}
         {error ? (
@@ -400,7 +401,7 @@ function PdfLineField({
     <input
       value={line.text}
       tabIndex={-1}
-      aria-label="Tekst u PDF-u"
+      aria-label={text("kb.pdfText")}
       onChange={(event) => onChange(line.id, event.target.value)}
       className={cn("kb-pdf-line", dirty && "kb-pdf-line-dirty")}
       style={

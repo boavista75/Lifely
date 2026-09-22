@@ -1,3 +1,5 @@
+import { text } from "@/i18n";
+
 export function LoadingScreen() {
   return (
     <div
@@ -8,7 +10,7 @@ export function LoadingScreen() {
     >
       <div className="pane-loader__inner">
         <span className="pane-loader__spinner" />
-        <p className="pane-loader__label">Učitavanje…</p>
+        <p className="pane-loader__label">{text("common.loading")}</p>
       </div>
     </div>
   );

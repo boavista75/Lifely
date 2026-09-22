@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { KbImageView, KbVideoView } from "@/components/KbMediaView";
 import {
   filesFromTransfer,
@@ -190,7 +191,7 @@ export async function insertMediaFiles(
         editor.chain().focus().insertContent(content).run();
       }
     } catch {
-      reportMediaError("Fajl nije sačuvan.");
+      reportMediaError(text("kb.fileNotSaved"));
     }
   }
   return true;

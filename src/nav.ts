@@ -1,3 +1,4 @@
+import type { MessageKey } from "@/i18n";
 import type { TabId } from "@/types";
 import {
   IconCalendar,
@@ -13,6 +14,18 @@ export type TabDef = {
   label: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
 };
+
+const TAB_LABELS: Record<TabId, MessageKey> = {
+  calendar: "nav.calendar",
+  todo: "nav.todo",
+  notes: "nav.notes",
+  knowledge: "nav.knowledge",
+  finances: "nav.finances",
+};
+
+export function tabLabel(id: TabId): MessageKey {
+  return TAB_LABELS[id];
+}
 
 export const TABS: TabDef[] = [
   { id: "calendar", label: "Kalendar", Icon: IconCalendar },

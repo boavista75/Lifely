@@ -1,4 +1,5 @@
 import { CompleteButton } from "@/components/CompleteButton";
+import { text } from "@/i18n";
 import { KbLinkButton } from "@/components/KbLinkButton";
 import { NoteLinkButton } from "@/components/NoteLinkButton";
 import { RowDeleteButton } from "@/components/RowDeleteButton";
@@ -49,7 +50,7 @@ export function ItemRow({
       <CompleteButton
         completed={complete}
         onToggle={onToggle}
-        label={complete ? "Označi kao nezavršeno" : "Označi kao završeno"}
+        label={complete ? text("item.reopen") : text("item.complete")}
       />
       <button
         type="button"
@@ -90,18 +91,18 @@ export function ItemRow({
       {showDefer && (
         <button
           type="button"
-          aria-label="Prebaci za sutra"
+          aria-label={text("item.defer")}
           onClick={(event) => {
             event.stopPropagation();
             updateItem(item.id, { date: nextDateKey(item.date) });
           }}
           className="pressable mr-1 min-h-11 shrink-0 rounded-full px-2.5 py-1.5 text-[13px] font-semibold text-accent"
         >
-          Za sutra
+          {text("item.tomorrow")}
         </button>
       )}
       <RowDeleteButton
-        label="Obriši stavku"
+        label={text("item.delete")}
         onClick={() => requestDelete(item.id)}
       />
     </motion.div>

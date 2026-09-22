@@ -110,6 +110,12 @@
           var paletteId = palettes[storedPalette] ? storedPalette : "grove";
           var colors = palettes[paletteId];
           var root = document.documentElement;
+          var storedLocale = localStorage.getItem("lifely-locale");
+          root.lang = storedLocale === "en" ? "en" : "sr-Latn";
+          if (storedLocale === "en") {
+            var bootLabel = document.querySelector(".boot-screen__label");
+            if (bootLabel) bootLabel.textContent = "Loading…";
+          }
           root.dataset.theme = theme;
           root.dataset.palette = paletteId;
           root.style.colorScheme = theme;

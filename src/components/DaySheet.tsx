@@ -1,4 +1,5 @@
 import { ItemRow } from "@/components/ItemRow";
+import { text } from "@/i18n";
 import { Sheet } from "@/components/Sheet";
 import { IconPlus } from "@/components/icons";
 import { fullDateTitle, parseDateKey } from "@/lib/dates";
@@ -40,14 +41,14 @@ export function DaySheet() {
             className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-full bg-accent/12 px-3.5 text-[15px] font-semibold text-accent"
           >
             <IconPlus className="size-4" />
-            Dodaj
+            {text("common.add")}
           </button>
         </header>
 
         <div className="min-h-[240px] flex-1 overflow-y-auto overscroll-contain px-2 pb-5 md:min-h-[320px] md:px-3">
           {dayItems.length === 0 ? (
             <p className="px-3 py-10 text-center text-[15px] text-ink-secondary">
-              Nema stavki za ovaj dan
+              {text("calendar.emptyDay")}
             </p>
           ) : (
             <AnimatePresence initial={false}>

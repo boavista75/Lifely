@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { todayKey } from "@/lib/dates";
 import {
   currentMonthKey,
@@ -50,8 +51,8 @@ export function tickFinanceReminders() {
     data.salaryNotifiedMonth !== month
   ) {
     void showNotice(
-      "Unesi platu",
-      `10. je u mesecu — unesi platu za ${monthTitleFromKey(month)}.`,
+      text("finance.salaryTitle"),
+      text("finance.salaryBody", { month: monthTitleFromKey(month) }),
       SALARY_TAG,
     ).then((shown) => {
       if (
@@ -69,8 +70,8 @@ export function tickFinanceReminders() {
     data.expenseNotifiedDate !== date
   ) {
     void showNotice(
-      "Unesi troškove",
-      "Podsetnik: unesi sve današnje troškove ako već nisi.",
+      text("finance.reminderExpensesTitle"),
+      text("finance.reminderExpensesBody"),
       EXPENSE_TAG,
     ).then((shown) => {
       if (

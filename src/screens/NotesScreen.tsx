@@ -1,4 +1,5 @@
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { text, useLocaleStore } from "@/i18n";
 import { KbPageLinkControl } from "@/components/KbPageLinkControl";
 import { IconChevron, IconPlus } from "@/components/icons";
 import { RichEditorToolbar, ToolGroup } from "@/components/RichEditorToolbar";
@@ -78,12 +79,12 @@ export function NotesScreen() {
           transition={tabTransition}
         >
           <ScreenHeader
-            title="Notes"
+            title={text("nav.notes")}
             actions={
               <button
                 type="button"
                 onClick={createNote}
-                aria-label="Kreiraj novi notes"
+                aria-label={text("notes.create")}
                 className="icon-btn text-accent hover:bg-accent/12"
               >
                 <IconPlus className="size-6" />
@@ -93,7 +94,7 @@ export function NotesScreen() {
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 pt-4 md:px-6">
             {notes.length === 0 ? (
               <p className="px-3 py-20 text-center text-[15px] text-ink-secondary">
-                Nema beleški. Dodaj prvu dugmetom +
+                {text("notes.empty")}
               </p>
             ) : (
               <div className="card overflow-hidden rounded-[22px]">
@@ -119,7 +120,7 @@ export function NotesScreen() {
                         ) : null}
                       </button>
                       <RowDeleteButton
-                        label="Obriši belešku"
+                        label={text("notes.delete")}
                         onClick={() => requestDeleteNote(note.id)}
                       />
                     </div>
@@ -176,6 +177,11 @@ function NoteEditor({
     [noteId],
   );
   editorRef.current = editor;
+  const locale = useLocaleStore((state) => state.locale);
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.view.dispatch(editor.state.tr);
+  }, [locale, editor]);
 
   useEffect(() => {
     const dom = editor?.view.dom;
@@ -231,14 +237,14 @@ function NoteEditor({
           className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
         >
           <IconChevron className="size-5" />
-          Beleške
+          {text("notes.list")}
         </button>
         <button
           type="button"
           onClick={() => requestDeleteNote(note.id)}
           className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
         >
-          Obriši
+          {text("common.delete")}
         </button>
       </header>
       <input
@@ -251,14 +257,14 @@ function NoteEditor({
             });
           }
         }}
-        placeholder="Naslov"
+        placeholder={text("common.title")}
         className="w-full shrink-0 bg-transparent px-5 py-2 font-display text-[32px] font-semibold leading-tight tracking-[-0.03em] outline-none placeholder:text-ink-tertiary md:px-8"
       />
       {editor && (
         <RichEditorToolbar
           editor={editor}
           extra={
-            <ToolGroup label="Linkovi">
+            <ToolGroup label={text("kb.links")}>
               <KbPageLinkControl editor={editor} />
             </ToolGroup>
           }
@@ -283,7 +289,7 @@ function LinkedItems({ noteId }: { noteId: string }) {
   return (
     <section className="mt-8 shrink-0 pb-8">
       <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
-        Povezane stavke
+        {text("notes.linked")}
       </h2>
       <div className="card overflow-hidden rounded-[22px]">
         {linked.map((item) => (

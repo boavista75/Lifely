@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { noteCreatedTitle } from "@/lib/dates";
 import { displayNoteTitle, notePreview } from "@/lib/notes";
 import type {
@@ -201,7 +202,7 @@ export function applyKbMove(
   const now = new Date().toISOString();
   const title =
     node.kind === "folder"
-      ? uniqueFolderTitle(nodes, parentId, node.title.trim() || "Novi folder")
+      ? uniqueFolderTitle(nodes, parentId, node.title.trim() || text("kb.newFolder"))
       : uniqueSiblingTitle(nodes, parentId, node.title);
   return nodes.map((entry) =>
     entry.id === nodeId
@@ -248,7 +249,7 @@ export function kbMoveFolderOptions(
 export function uniqueFolderTitle(
   nodes: LifelyKbNode[],
   parentId: string | null,
-  base = "Novi folder",
+  base = text("kb.newFolder"),
 ): string {
   const used = new Set(
     nodes

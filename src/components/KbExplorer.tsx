@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import {
   IconChevron,
   IconClose,
@@ -267,7 +268,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
         compact ? "px-2 py-8 text-[13px]" : "px-3 py-20 text-[15px]",
       )}
     >
-        Nema stranica. Dodaj folder, stranicu ili otpremi fajlove
+        {text("kb.empty")}
     </p>
   ) : (
     <KbTree
@@ -308,8 +309,8 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Pronađi stranicu"
-        aria-label="Pronađi stranicu"
+        placeholder={text("kb.findPage")}
+        aria-label={text("kb.findPage")}
         className={cn(
           "min-w-0 flex-1 bg-transparent outline-none placeholder:text-ink-tertiary",
           compact ? "text-[13px]" : "text-[15px]",
@@ -318,7 +319,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
       {query ? (
         <button
           type="button"
-          aria-label="Obriši pretragu"
+          aria-label={text("kb.clearSearch")}
           onClick={() => setQuery("")}
           className="grid size-6 place-items-center text-ink-tertiary"
         >
@@ -332,7 +333,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
     <div className="relative shrink-0" data-kb-add-menu>
       <button
         type="button"
-        aria-label="Dodaj"
+        aria-label={text("common.add")}
         aria-expanded={menu?.kind === "header"}
         onClick={() =>
           setMenu((current) =>
@@ -384,7 +385,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
       <KbMoveUiContext.Provider value={moveUi}>
         <div
           className="mt-4 flex min-h-0 flex-1 flex-col border-t border-hairline pt-4"
-          aria-label="Knowledge stranice"
+          aria-label={text("kb.pages")}
         >
           <div className="flex shrink-0 items-center gap-1.5 px-0.5">
             <div className="min-w-0 flex-1">{searchField}</div>
@@ -418,7 +419,7 @@ export function KbExplorer({ variant }: { variant: "page" | "sidebar" }) {
     <KbMoveUiContext.Provider value={moveUi}>
       <div className="flex h-full min-h-0 flex-col">
         <ScreenHeader
-          title="Knowledge"
+          title={text("nav.knowledge")}
           subtitle={
             createParent ? (
               <p className="mt-2 truncate text-[13px] text-ink-secondary">
@@ -573,7 +574,7 @@ function KbFolderNode({
         <button
           type="button"
           aria-expanded={open}
-          aria-label={open ? "Zatvori folder" : "Otvori folder"}
+          aria-label={open ? text("kb.closeFolder") : text("kb.openFolder")}
           onClick={(event) => {
             event.stopPropagation();
             onToggleFolder(node.id);
@@ -608,7 +609,7 @@ function KbFolderNode({
         </button>
         <input
           value={node.title}
-          aria-label="Naziv foldera"
+          aria-label={text("kb.folderName")}
           draggable={false}
           onFocus={() => onSelectFolder(node.id)}
           onChange={(event) =>
@@ -616,7 +617,7 @@ function KbFolderNode({
           }
           onBlur={() => {
             if (!node.title.trim()) {
-              updateNode(node.id, { title: "Novi folder" });
+              updateNode(node.id, { title: text("kb.newFolder") });
             }
           }}
           className={cn(
@@ -642,7 +643,7 @@ function KbFolderNode({
         >
           <button
             type="button"
-            aria-label="Dodaj u folder"
+            aria-label={text("kb.addToFolder")}
             aria-expanded={menuOpen}
             onClick={(event) => {
               event.stopPropagation();
@@ -664,7 +665,7 @@ function KbFolderNode({
           ) : null}
           <button
             type="button"
-            aria-label="Premesti folder"
+            aria-label={text("kb.moveFolder")}
             onClick={(event) => {
               event.stopPropagation();
               onSelectFolder(node.id);
@@ -680,7 +681,7 @@ function KbFolderNode({
           <KbDownloadButton nodeId={node.id} compact={compact} />
           <button
             type="button"
-            aria-label="Obriši folder"
+            aria-label={text("kb.deleteFolder")}
             onClick={(event) => {
               event.stopPropagation();
               requestDeleteKb("kb-folder", node.id);
@@ -786,7 +787,7 @@ function KbPageNode({
       <div className="kb-hover-actions items-center pr-0.5">
         <button
           type="button"
-          aria-label="Premesti stranicu"
+          aria-label={text("kb.movePage")}
           onClick={(event) => {
             event.stopPropagation();
             moveUi.requestMove(node.id);
@@ -801,7 +802,7 @@ function KbPageNode({
           <KbDownloadButton nodeId={node.id} compact={compact} />
           <button
             type="button"
-            aria-label="Obriši stranicu"
+            aria-label={text("kb.deletePage")}
           onClick={(event) => {
             event.stopPropagation();
             requestDeleteKb("kb-page", node.id);
@@ -883,7 +884,7 @@ function KbFileNode({
       <div className="kb-hover-actions items-center pr-0.5">
         <button
           type="button"
-          aria-label="Premesti fajl"
+          aria-label={text("kb.moveFile")}
           onClick={(event) => {
             event.stopPropagation();
             moveUi.requestMove(node.id);
@@ -898,7 +899,7 @@ function KbFileNode({
           <KbDownloadButton nodeId={node.id} compact={compact} />
           <button
             type="button"
-            aria-label="Obriši fajl"
+            aria-label={text("kb.deleteFile")}
           onClick={(event) => {
             event.stopPropagation();
             requestDeleteKb("kb-file", node.id);
@@ -941,7 +942,7 @@ function KbSearchHits({
           compact ? "px-2 py-6 text-[13px]" : "px-3 py-10 text-[15px]",
         )}
       >
-        Nema podudaranja
+        {text("kb.noMatches")}
       </p>
     );
   }
@@ -998,7 +999,7 @@ function KbSearchHits({
               <button
                 type="button"
                 aria-label={
-                  kind === "file" ? "Premesti fajl" : "Premesti stranicu"
+                  kind === "file" ? text("kb.moveFile") : text("kb.movePage")
                 }
                 onClick={() => moveUi.requestMove(node.id)}
                 className={cn(
@@ -1162,7 +1163,7 @@ function KbAddMenu({
         className="flex min-h-11 w-full items-center gap-2 px-3.5 text-left text-[15px]"
       >
         <IconPage className="size-[18px] text-ink-secondary" />
-        Nova stranica
+        {text("kb.newPage")}
       </button>
       <button
         type="button"
@@ -1170,7 +1171,7 @@ function KbAddMenu({
         className="flex min-h-11 w-full items-center gap-2 px-3.5 text-left text-[15px]"
       >
         <IconFolder className="size-[18px] text-ink-secondary" />
-        Novi folder
+        {text("kb.newFolder")}
       </button>
     </div>
   );

@@ -1,4 +1,5 @@
 import { IconFilter } from "@/components/icons";
+import { text } from "@/i18n";
 import { SportCheck } from "@/components/SportCheck";
 import { cn } from "@/lib/cn";
 import { useUiStore } from "@/store/useUiStore";
@@ -27,7 +28,7 @@ export function CalendarFilters() {
       <button
         ref={buttonRef}
         type="button"
-        aria-label={showSport ? "Filteri, sport je uključen" : "Filteri"}
+        aria-label={showSport ? text("calendar.filtersSport") : text("calendar.filters")}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
@@ -40,7 +41,7 @@ export function CalendarFilters() {
         )}
       >
         <IconFilter className="size-[18px]" />
-        Filteri
+        {text("calendar.filters")}
         {showSport ? (
           <span
             className="grid size-5 place-items-center rounded-full bg-accent text-[11px] font-bold text-accent-fg"
@@ -153,16 +154,16 @@ function FiltersPanel({
           id={titleId}
           className="font-display text-[18px] font-semibold tracking-[-0.02em]"
         >
-          Filteri
+          {text("calendar.filters")}
         </p>
         <p className="mt-1 text-[13px] leading-snug text-ink-secondary">
-          Izaberi koje vrste stavki želiš da vidiš.
+          {text("calendar.filtersHint")}
         </p>
       </div>
       <SportCheck
         checked={showSport}
         onChange={setShowSport}
-        description="Prikaži NBA utakmice, skijaške trke i ostale sportske događaje. Isključi ako želiš da ostanu samo lične obaveze."
+        label={text("calendar.showSport")}
       />
     </div>,
     document.body,

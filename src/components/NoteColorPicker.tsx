@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import {
   clamp,
@@ -165,7 +166,7 @@ export function NoteColorPicker({
     >
       <div
         role="slider"
-        aria-label="Zasićenje i svetlost"
+        aria-label={text("color.saturation")}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(hsv.s * 100)}
@@ -186,7 +187,7 @@ export function NoteColorPicker({
       </div>
       <div
         role="slider"
-        aria-label="Nijansa"
+        aria-label={text("color.hue")}
         aria-valuemin={0}
         aria-valuemax={360}
         aria-valuenow={Math.round(hsv.h)}
@@ -215,7 +216,7 @@ export function NoteColorPicker({
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
-            aria-label="Hex boja"
+            aria-label={text("color.hex")}
             onMouseDown={(event) => event.stopPropagation()}
             onChange={(event) => {
               const next = event.target.value
@@ -250,7 +251,7 @@ export function NoteColorPicker({
             value ? "text-danger" : "text-ink-tertiary",
           )}
         >
-          Ukloni
+          {text("profile.removePhoto")}
         </button>
       </div>
     </div>,

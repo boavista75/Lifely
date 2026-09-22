@@ -1,4 +1,5 @@
 import { Sheet } from "@/components/Sheet";
+import { text } from "@/i18n";
 import { IconCheck, IconFolder, IconKnowledge } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import {
@@ -22,10 +23,10 @@ export function KbMoveSheet({ nodeId, onClose, onMove }: Props) {
   const canRoot = node ? canMoveKbNode(nodes, node.id, null) : false;
   const kindLabel =
     node?.kind === "folder"
-      ? "folder"
+      ? text("kb.kindFolder")
       : node?.kind === "file"
-        ? "fajl"
-        : "stranica";
+        ? text("kb.kindFile")
+        : text("kb.kindPage");
 
   return (
     <Sheet open={Boolean(node)} onClose={onClose} labelledBy="kb-move-title">
@@ -34,7 +35,7 @@ export function KbMoveSheet({ nodeId, onClose, onMove }: Props) {
           id="kb-move-title"
           className="font-display text-[22px] font-semibold tracking-[-0.02em]"
         >
-          Premesti
+          {text("kb.move")}
         </h2>
         {node ? (
           <p className="mt-1 truncate text-[13px] text-ink-secondary">
@@ -54,7 +55,7 @@ export function KbMoveSheet({ nodeId, onClose, onMove }: Props) {
             )}
           >
             <IconKnowledge className="size-[18px] shrink-0 text-ink-secondary" />
-            <span className="min-w-0 flex-1 truncate">Na početak</span>
+            <span className="min-w-0 flex-1 truncate">{text("kb.moveRoot")}</span>
             {atRoot ? <IconCheck className="size-4 shrink-0 text-accent" /> : null}
           </button>
           {options.map((folder) => (

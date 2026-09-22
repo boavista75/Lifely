@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { dialogTransition, sheetSpring } from "@/lib/motion";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -36,7 +37,7 @@ export function Sheet({
         <div className="fixed inset-0" style={{ zIndex }}>
           <motion.button
             type="button"
-            aria-label="Zatvori"
+            aria-label={text("common.close")}
             className="absolute inset-0 bg-[var(--backdrop)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

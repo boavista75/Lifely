@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { cropImageBlob } from "@/lib/media";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
@@ -91,15 +92,15 @@ export function ImageCropDialog({
           onClick={onClose}
           className="min-h-11 px-3 text-[16px] text-white"
         >
-          Odustani
+          {text("crop.cancel")}
         </button>
-        <p className="text-[16px] font-semibold text-white">Kropuj</p>
+        <p className="text-[16px] font-semibold text-white">{text("crop.title")}</p>
         <button
           type="button"
           onClick={() => void apply()}
           className="min-h-11 px-3 text-[16px] font-semibold text-white"
         >
-          Sačuvaj
+          {text("crop.save")}
         </button>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center p-4">
@@ -158,7 +159,7 @@ export function ImageCropDialog({
                   <button
                     key={handle}
                     type="button"
-                    aria-label="Ivica kropljenja"
+                    aria-label={text("crop.edge")}
                     className={cn(
                       "absolute size-4 rounded-full bg-white shadow",
                       place,

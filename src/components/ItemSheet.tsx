@@ -1,4 +1,5 @@
 import { SportCheck } from "@/components/SportCheck";
+import { text } from "@/i18n";
 import { KbPagePicker } from "@/components/KbPagePicker";
 import { NotePicker } from "@/components/NotePicker";
 import { SegmentedControl } from "@/components/SegmentedControl";
@@ -10,12 +11,6 @@ import { useItemsStore } from "@/store/useItemsStore";
 import { useUiStore, type ItemSheetState } from "@/store/useUiStore";
 import type { LifelyItem, TimeMode } from "@/types";
 import { useEffect, useRef, useState } from "react";
-
-const TIME_OPTIONS: { value: TimeMode; label: string }[] = [
-  { value: "none", label: "Bez vremena" },
-  { value: "start", label: "Samo početak" },
-  { value: "range", label: "Od–do" },
-];
 
 export function ItemSheet() {
   const itemSheet = useUiStore((state) => state.itemSheet);
@@ -93,14 +88,14 @@ function ItemForm({
   function save() {
     const trimmed = title.trim();
     if (!trimmed) {
-      setError("Unesite naziv");
+      setError(text("item.titleRequired"));
       titleRef.current?.focus();
       return;
     }
     const start = timeMode === "none" ? null : normalizeTime(startTime);
     const end = timeMode === "range" ? normalizeTime(endTime) : null;
     if (timeMode === "range" && start && end && !isValidRange(start, end)) {
-      setError("Kraj mora biti posle početka");
+      setError(text("item.endBeforeStart"));
       return;
     }
     if (saving) return;
@@ -132,8 +127,13 @@ function ItemForm({
     closeItemSheet();
   }
 
-  const heading = isEdit ? "Izmeni stavku" : "Nova stavka";
-  const saveLabel = isEdit ? "Sačuvaj" : "Dodaj";
+  const heading = isEdit ? text("item.edit") : text("item.new");
+  const saveLabel = isEdit ? text("common.save") : text("common.add");
+  const timeOptions = [
+    { value: "none" as const, label: text("item.noTime") },
+    { value: "start" as const, label: text("item.startOnly") },
+    { value: "range" as const, label: text("item.range") },
+  ];
 
   return (
     <form
@@ -149,7 +149,7 @@ function ItemForm({
           onClick={closeItemSheet}
           className="pressable min-h-11 rounded-full px-2 text-[16px] text-ink-secondary"
         >
-          Otkaži
+          {text("common.cancel")}
         </button>
         <h2 id="item-sheet-title" className="font-display text-[18px] font-semibold tracking-[-0.02em]">
           {heading}
@@ -166,7 +166,7 @@ function ItemForm({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 md:px-5">
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Naziv
+            {text("item.name")}
           </span>
           <input
             ref={titleRef}
@@ -175,14 +175,14 @@ function ItemForm({
               setTitle(event.target.value);
               if (error) setError(null);
             }}
-            placeholder="Šta treba uraditi"
+            placeholder={text("item.placeholder")}
             className="field"
           />
         </label>
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Datum
+            {text("item.date")}
           </span>
           <input
             type="date"
@@ -202,13 +202,13 @@ function ItemForm({
 
         <div className="mb-4">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Vreme
+            {text("item.time")}
           </span>
           <SegmentedControl
             value={timeMode}
             onChange={onTimeModeChange}
-            options={TIME_OPTIONS}
-            ariaLabel="Režim vremena"
+            options={timeOptions}
+            ariaLabel={text("item.timeMode")}
             size="sm"
           />
         </div>
@@ -221,13 +221,13 @@ function ItemForm({
             )}
           >
             <TimePicker
-              label="Početak"
+              label={text("item.start")}
               value={startTime}
               onChange={(next) => setStartTime(normalizeTime(next))}
             />
             {timeMode === "range" && (
               <TimePicker
-                label="Kraj"
+                label={text("item.end")}
                 value={endTime}
                 onChange={(next) => setEndTime(normalizeTime(next))}
               />
@@ -252,7 +252,7 @@ function ItemForm({
             onClick={() => requestDelete(existing.id)}
             className="pressable mt-2 flex min-h-11 w-full items-center justify-center rounded-2xl bg-danger/8 text-[16px] font-medium text-danger"
           >
-            Obriši stavku
+            {text("item.delete")}
           </button>
         )}
       </div>

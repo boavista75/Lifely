@@ -1,13 +1,16 @@
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { useId } from "react";
 
 type Props = {
   checked: boolean;
   onChange: (next: boolean) => void;
+  label?: string;
   description?: string;
 };
 
-export function SportCheck({ checked, onChange, description }: Props) {
+export function SportCheck({ checked, onChange, label, description }: Props) {
+  const caption = label ?? text("item.sport");
   const descId = useId();
 
   return (
@@ -45,7 +48,7 @@ export function SportCheck({ checked, onChange, description }: Props) {
         </svg>
       </span>
       <span className="min-w-0">
-        <span className="block text-[16px] font-medium">Sport</span>
+        <span className="block text-[16px] font-medium">{caption}</span>
         {description ? (
           <span
             id={descId}

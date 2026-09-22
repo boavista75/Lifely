@@ -1,4 +1,5 @@
 import { IconChevron } from "@/components/icons";
+import { text } from "@/i18n";
 import { KbDownloadButton } from "@/components/KbDownloadButton";
 import { KB_FILE_UNOPENABLE } from "@/lib/kbFilePreview";
 import { useKbStore } from "@/store/useKbStore";
@@ -24,7 +25,7 @@ export function KbFileViewer({ fileId }: { fileId: string }) {
           className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
         >
           <IconChevron className="size-5" />
-          Knowledge
+          {text("nav.knowledge")}
         </button>
         <div className="flex shrink-0 items-center">
           <KbDownloadButton nodeId={file.id} variant="label" />
@@ -33,7 +34,7 @@ export function KbFileViewer({ fileId }: { fileId: string }) {
             onClick={() => requestDeleteKb("kb-file", file.id)}
             className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
           >
-            Obriši
+            {text("common.delete")}
           </button>
         </div>
       </header>

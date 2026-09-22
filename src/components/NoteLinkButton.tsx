@@ -1,4 +1,5 @@
 import { IconNotes } from "@/components/icons";
+import { text } from "@/i18n";
 import { useUiStore } from "@/store/useUiStore";
 
 export function NoteLinkButton({
@@ -12,7 +13,7 @@ export function NoteLinkButton({
   return (
     <button
       type="button"
-      aria-label="Otvori belešku"
+      aria-label={text("item.openNote")}
       onClick={(event) => {
         event.stopPropagation();
         openLinkedNote(noteId);

@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { dialogTransition } from "@/lib/motion";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect } from "react";
@@ -41,7 +42,7 @@ export function FinanceConfirm({
         <div className="fixed inset-0 z-[80] grid place-items-center px-6">
           <motion.button
             type="button"
-            aria-label="Zatvori"
+            aria-label={text("common.close")}
             className="absolute inset-0 bg-[var(--backdrop)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -76,7 +77,7 @@ export function FinanceConfirm({
                 onClick={onCancel}
                 className="min-h-12 text-[16px] text-ink-secondary transition-colors duration-150 hover:bg-ink/[0.04]"
               >
-                Otkaži
+                {text("common.cancel")}
               </button>
               <button
                 type="button"

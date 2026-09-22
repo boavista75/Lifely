@@ -1,4 +1,5 @@
 import { CalendarFilters } from "@/components/CalendarFilters";
+import { text } from "@/i18n";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { IconChevron } from "@/components/icons";
 import {
@@ -13,7 +14,7 @@ import {
   todayKey,
   toDateKey,
   weekKey,
-  WEEKDAY_LETTERS,
+  weekdayLetters,
 } from "@/lib/dates";
 import { filterCalendarItems, sortDayItems } from "@/lib/items";
 import { monthSlide, slideTransition } from "@/lib/motion";
@@ -93,16 +94,16 @@ export function CalendarScreen() {
       <header className="shrink-0 px-4 pt-3 md:px-8 md:pt-8">
         <div className="flex items-center justify-between gap-3">
           <h1 className="page-title flex min-h-11 min-w-0 items-center md:hidden">
-            Kalendar
+            {text("nav.calendar")}
           </h1>
           <p className="hidden min-w-0 truncate font-display text-[34px] font-semibold leading-[0.95] tracking-[-0.03em] tabular md:flex md:min-h-11 md:items-center">
             {title}
           </p>
           <div className="flex min-h-11 shrink-0 items-center gap-0.5">
-            <IconButton label="Prethodni" onClick={() => go(-1)}>
+            <IconButton label={text("common.previous")} onClick={() => go(-1)}>
               <IconChevron className="size-5" />
             </IconButton>
-            <IconButton label="Sledeći" onClick={() => go(1)}>
+            <IconButton label={text("common.next")} onClick={() => go(1)}>
               <IconChevron className="size-5 rotate-180" />
             </IconButton>
             <button
@@ -110,7 +111,7 @@ export function CalendarScreen() {
               onClick={goToday}
               className="pressable ml-1 min-h-11 rounded-full bg-accent/12 px-3.5 text-[14px] font-semibold text-accent"
             >
-              Danas
+              {text("common.today")}
             </button>
           </div>
         </div>
@@ -123,10 +124,10 @@ export function CalendarScreen() {
               value={view}
               onChange={onViewChange}
               options={[
-                { value: "month", label: "Mesec" },
-                { value: "week", label: "Nedelja" },
+                { value: "month", label: text("calendar.month") },
+                { value: "week", label: text("calendar.week") },
               ]}
-              ariaLabel="Prikaz kalendara"
+              ariaLabel={text("calendar.view")}
             />
           </div>
           <CalendarFilters />
@@ -135,7 +136,7 @@ export function CalendarScreen() {
 
       {view === "month" && (
         <div className="grid shrink-0 grid-cols-7 px-1 md:px-4">
-          {WEEKDAY_LETTERS.map((letter, index) => (
+          {weekdayLetters().map((letter, index) => (
             <span
               key={`${letter}-${index}`}
               className="py-1 text-center text-[11px] font-medium uppercase tracking-wider text-ink-secondary"

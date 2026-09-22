@@ -1,4 +1,5 @@
 import { NoteColorPicker } from "@/components/NoteColorPicker";
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import type { Editor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -17,12 +18,12 @@ export function RichEditorToolbar({
     <div className="shrink-0 px-3 pb-2 md:px-6">
       <div
         role="toolbar"
-        aria-label="Alati za uređivanje"
+        aria-label={text("editor.tools")}
         className="flex flex-wrap content-start items-center gap-y-0.5 rounded-2xl bg-surface-2/90 p-1"
       >
-        <ToolGroup label="Naslovi">
+        <ToolGroup label={text("editor.headings")}>
           <ToolButton
-            label="Naslov 1"
+            label={text("editor.heading1")}
             active={editor.isActive("heading", { level: 1 })}
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 1 }).run()
@@ -31,7 +32,7 @@ export function RichEditorToolbar({
             H1
           </ToolButton>
           <ToolButton
-            label="Naslov 2"
+            label={text("editor.heading2")}
             active={editor.isActive("heading", { level: 2 })}
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 2 }).run()
@@ -40,7 +41,7 @@ export function RichEditorToolbar({
             H2
           </ToolButton>
           <ToolButton
-            label="Naslov 3"
+            label={text("editor.heading3")}
             active={editor.isActive("heading", { level: 3 })}
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 3 }).run()
@@ -49,33 +50,33 @@ export function RichEditorToolbar({
             H3
           </ToolButton>
         </ToolGroup>
-        <ToolGroup label="Formatiranje">
+        <ToolGroup label={text("editor.format")}>
           <ToolButton
-            label="Podebljano"
+            label={text("editor.bold")}
             active={editor.isActive("bold")}
             onClick={() => editor.chain().focus().toggleBold().run()}
           >
             <span className="font-bold">B</span>
           </ToolButton>
           <ToolButton
-            label="Kurziv"
+            label={text("editor.italic")}
             active={editor.isActive("italic")}
             onClick={() => editor.chain().focus().toggleItalic().run()}
           >
             <span className="italic">I</span>
           </ToolButton>
           <ToolButton
-            label="Podvučeno"
+            label={text("editor.underline")}
             active={editor.isActive("underline")}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
           >
             <span className="underline">U</span>
           </ToolButton>
         </ToolGroup>
-        <ToolGroup label="Boje">
+        <ToolGroup label={text("editor.colors")}>
           <ColorMenu
             editor={editor}
-            label="Boja teksta"
+            label={text("editor.textColor")}
             kind="text"
             current={
               editor.getAttributes("textStyle").color as string | undefined
@@ -83,16 +84,16 @@ export function RichEditorToolbar({
           />
           <ColorMenu
             editor={editor}
-            label="Pozadina teksta"
+            label={text("editor.highlight")}
             kind="highlight"
             current={
               editor.getAttributes("highlight").color as string | undefined
             }
           />
         </ToolGroup>
-        <ToolGroup label="Liste">
+        <ToolGroup label={text("editor.lists")}>
           <ToolButton
-            label="Lista sa tačkama"
+            label={text("editor.bullets")}
             active={editor.isActive("bulletList")}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
           >
@@ -109,14 +110,14 @@ export function RichEditorToolbar({
             </svg>
           </ToolButton>
           <ToolButton
-            label="Numerisana lista"
+            label={text("editor.numbered")}
             active={editor.isActive("orderedList")}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
           >
             <span className="text-[12px] tracking-tight">1.</span>
           </ToolButton>
           <ToolButton
-            label="Lista sa kvačicama"
+            label={text("editor.tasks")}
             active={editor.isActive("taskList")}
             onClick={() => editor.chain().focus().toggleTaskList().run()}
           >

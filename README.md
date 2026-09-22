@@ -4,7 +4,7 @@ Personal life OS — calendar, todos, notes, knowledge, and finances.
 
 **[English](#english)** · **[Srpski](#srpski)**
 
-The UI is **Serbian (Latin)**. There is currently no account and no server. Everything stays in this browser on this device.
+The UI is **Serbian (Latin)**. Sign-in and sync need the server from [DEPLOY.md](DEPLOY.md). Theme, palette, and the active tab stay on this device. Calendar, todos, notes, knowledge, and finances belong to the signed-in account.
 
 ---
 
@@ -77,14 +77,15 @@ A wiki, not a flat list:
 
 ### Data and privacy
 
-Everything is local to this browser:
+Everything for an account is stored on the server (PostgreSQL and private files). This browser keeps only device preferences and a cache of media:
 
 | What | Where |
 | --- | --- |
-| Items, notes, knowledge, finances, active tab, theme | `localStorage` |
-| Knowledge images and video | `IndexedDB` (`lifely-media`) |
+| Items, notes, knowledge, finances | Server, scoped to the signed-in account |
+| Knowledge images, video, and files | Server, private; cached in `IndexedDB` (`lifely-media`) |
+| Active tab, theme, palette, sidebar width | `localStorage` |
 
-There is no sync across devices. A different browser, another phone, or clearing site data means a different (or empty) dataset. There is no backup off the device.
+A different browser sees the same account after sign-in. See [DEPLOY.md](DEPLOY.md) for Hetzner, Cloudflare, and database access. The first sign-in as `nikola` on a browser that already has Lifely data copies that browser’s data onto the account.
 
 ---
 
@@ -92,7 +93,7 @@ There is no sync across devices. A different browser, another phone, or clearing
 
 Lifely je lična web aplikacija za organizaciju dana: kalendar i todo, beleške, baza znanja i finansije. Interfejs je na **srpskom (latinica)**. Dizajnirana i optimizovana je za telefon i desktop.
 
-Trenutno nema naloga i servera. Sve ostaje u browseru na tom uređaju.
+Interfejs je na **srpskom (latinica)**. Prijava i sinhronizacija traže server iz [DEPLOY.md](DEPLOY.md). Tema, paleta i aktivni tab ostaju na uređaju. Kalendar, todo, beleške, knowledge i finansije pripadaju nalogu.
 
 ### Stanje
 
@@ -159,14 +160,15 @@ Wiki-struktura, ne flat lista:
 
 ### Podaci i privatnost
 
-Sve je lokalno, u ovom browseru:
+Podaci naloga su na serveru (PostgreSQL i privatni fajlovi). Browser čuva samo podešavanja uređaja i keš medija:
 
 | Šta | Gde |
 | --- | --- |
-| Stavke, beleške, knowledge, finansije, aktivni tab, tema | `localStorage` |
-| Slike i video u knowledge | `IndexedDB` (`lifely-media`) |
+| Stavke, beleške, knowledge, finansije | Server, samo za prijavljeni nalog |
+| Slike, video i fajlovi u knowledge | Server, privatno; keš u `IndexedDB` (`lifely-media`) |
+| Aktivni tab, tema, paleta, širina sidebara | `localStorage` |
 
-Nema sinhronizacije između uređaja. Drugi browser, drugi telefon ili brisanje podataka sajta = drugi (ili prazan) skup podataka. Nema backup-a van uređaja.
+Drugi browser vidi iste podatke posle prijave. Postavljanje na Hetzner i Cloudflare, i pristup bazi, opisani su u [DEPLOY.md](DEPLOY.md). Prva prijava kao `nikola` na browseru koji već ima podatke prebacuje te podatke na nalog.
 
 ---
 
@@ -186,10 +188,15 @@ Nema sinhronizacije između uređaja. Drugi browser, drugi telefon ili brisanje 
 
 ```bash
 npm install
+cp .env.example .env
+# upiši POSTGRES_PASSWORD i SEED_PASSWORD u .env
+docker compose up -d --build
 npm run dev
 ```
 
-The app opens at the URL Vite prints (usually `http://localhost:5173`).
+The app opens at the URL Vite prints (usually `http://localhost:5173`). Sign in there. Production hosting, Cloudflare, and the database UI are in [DEPLOY.md](DEPLOY.md).
+
+Without Docker, start PostgreSQL yourself, set `DATABASE_URL` and `MEDIA_DIR` in `.env`, then run `npm run api` in another terminal.
 
 ```bash
 npm run build      # production build → dist/

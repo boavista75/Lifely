@@ -1,4 +1,5 @@
 import { IconClose } from "@/components/icons";
+import { text } from "@/i18n";
 import { displayNoteTitle } from "@/lib/notes";
 import { useNotesStore } from "@/store/useNotesStore";
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +29,7 @@ export function NotePicker({ value, onChange }: Props) {
   return (
     <div ref={rootRef} className="relative mb-4">
       <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-        Notes
+        {text("nav.notes")}
       </span>
       <div className="flex gap-2">
         <button
@@ -47,7 +48,7 @@ export function NotePicker({ value, onChange }: Props) {
         </button>
         <button
           type="button"
-          aria-label="Ukini vezu sa beleškom"
+          aria-label={text("notes.unlink")}
           disabled={!value}
           onClick={() => {
             onChange(null);
@@ -65,7 +66,7 @@ export function NotePicker({ value, onChange }: Props) {
         >
           {notes.length === 0 ? (
             <p className="px-3.5 py-3 text-[13px] text-ink-tertiary">
-              Nema beleški
+              {text("notes.noNotes")}
             </p>
           ) : (
             notes.map((note) => (

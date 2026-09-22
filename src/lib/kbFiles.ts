@@ -2,7 +2,7 @@ import { KB_TEXT_SCALE_DEFAULT, uniqueSiblingTitle } from "@/lib/kb";
 import { convertDocumentToHtml } from "@/lib/kbFilePreview";
 import type { LifelyKbFile, LifelyKbFolder, LifelyKbNode } from "@/types";
 
-export const MAX_KB_FILE_BYTES = 100 * 1024 * 1024;
+export const MAX_KB_FILE_BYTES = 90 * 1024 * 1024;
 export const EDITOR_FILE_EXTS = new Set(["md", "txt"]);
 export const OFFICE_FILE_EXTS = new Set(["doc", "docx"]);
 

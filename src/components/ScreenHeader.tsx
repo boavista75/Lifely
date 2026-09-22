@@ -1,4 +1,5 @@
 import { IconChevron } from "@/components/icons";
+import { text } from "@/i18n";
 import type { ReactNode } from "react";
 
 export function ScreenHeader({
@@ -21,7 +22,7 @@ export function ScreenHeader({
               <button
                 type="button"
                 onClick={onBack}
-                aria-label="Nazad"
+                aria-label={text("common.back")}
                 className="icon-btn -ml-2 shrink-0"
               >
                 <IconChevron className="size-5" />

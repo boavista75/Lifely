@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { isWebHref } from "@/lib/kb";
 import { KbImage, KbMediaDrop, KbVideo } from "@/lib/kbMedia";
 import { Extension } from "@tiptap/core";
@@ -11,7 +12,7 @@ import type { Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
 const PLACEHOLDER = Placeholder.configure({
-  placeholder: "Počni da pišeš…",
+  placeholder: () => text("editor.placeholder"),
 });
 
 type FindMatch = { from: number; to: number };
@@ -79,7 +80,7 @@ const TASK_LIST = [
     nested: true,
     a11y: {
       checkboxLabel: (_node, checked) =>
-        checked ? "Završeno" : "Nije završeno",
+        checked ? text("editor.done") : text("editor.notDone"),
     },
   }),
   TaskListPointerFix,

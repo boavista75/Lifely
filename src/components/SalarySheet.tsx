@@ -1,4 +1,5 @@
 import { FinanceConfirm } from "@/components/FinanceConfirm";
+import { text } from "@/i18n";
 import { IconChevron } from "@/components/icons";
 import { Sheet } from "@/components/Sheet";
 import {
@@ -59,7 +60,7 @@ function SalaryForm({
   function submit(force: boolean) {
     const parsed = parseAmount(amount, { allowZero: true });
     if (parsed === null) {
-      setError("Unesite iznos plate u dinarima");
+      setError(text("finance.salaryAmountRequired"));
       amountRef.current?.focus();
       return;
     }
@@ -87,20 +88,20 @@ function SalaryForm({
           onClick={onClose}
           className="pressable min-h-11 rounded-full px-2 text-[16px] text-ink-secondary"
         >
-          Otkaži
+          {text("common.cancel")}
         </button>
         <h2
           id="salary-sheet-title"
           className="font-display text-[18px] font-semibold tracking-[-0.02em]"
         >
-          Unesi platu
+          {text("finance.salaryTitle")}
         </h2>
         <button
           type="submit"
           disabled={saving}
           className="pressable min-h-11 rounded-full px-2 text-[16px] font-semibold text-accent disabled:opacity-50"
         >
-          Sačuvaj
+          {text("common.save")}
         </button>
       </header>
 
@@ -110,15 +111,13 @@ function SalaryForm({
             className="mb-4 rounded-2xl bg-danger/8 px-4 py-3 text-[13px] leading-5 text-danger"
             role="status"
           >
-            Plata za {monthTitleFromKey(month)} je već uneta. Nova plata će
-            preklopiti (zameniti) prethodno unetu platu, a svi troškovi za taj
-            mesec biće resetovani na 0.
+            {text("finance.salaryExists", { month: monthTitleFromKey(month) })}
           </p>
         )}
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Iznos (RSD)
+            {text("finance.amountRsd")}
           </span>
           <input
             ref={amountRef}
@@ -128,14 +127,14 @@ function SalaryForm({
               setAmount(event.target.value);
               if (error) setError(null);
             }}
-            placeholder="npr. 70.000"
+            placeholder={text("finance.amountExample")}
             className="field tabular-nums"
           />
         </label>
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Mesec
+            {text("finance.month")}
           </span>
           <MonthSelect value={month} onChange={setMonth} />
         </label>
@@ -149,9 +148,9 @@ function SalaryForm({
 
       <FinanceConfirm
         open={confirmOpen}
-        title="Zameniti platu?"
-        body={`Plata za ${monthTitleFromKey(month)} je već uneta. Nova plata će preklopiti (zameniti) prethodno unetu platu, a svi troškovi za taj mesec biće resetovani na 0.`}
-        confirmLabel="Zameni"
+        title={text("finance.replaceSalary")}
+        body={text("finance.salaryExists", { month: monthTitleFromKey(month) })}
+        confirmLabel={text("finance.replace")}
         onCancel={() => setConfirmOpen(false)}
         onConfirm={() => {
           setConfirmOpen(false);
@@ -177,7 +176,7 @@ function MonthSelect({
       <select
         value={selected}
         onChange={(event) => onChange(event.target.value)}
-        aria-label="Mesec"
+        aria-label={text("finance.month")}
         className="field"
       >
         {options.map((entry) => (

@@ -1,4 +1,5 @@
-import { TABS } from "@/nav";
+import { text } from "@/i18n";
+import { tabLabel, TABS } from "@/nav";
 import { cn } from "@/lib/cn";
 import { snappySpring } from "@/lib/motion";
 import { useUiStore } from "@/store/useUiStore";
@@ -11,11 +12,11 @@ export function TabBar() {
 
   return (
     <nav
-      aria-label="Glavna navigacija"
+      aria-label={text("nav.main")}
       className="absolute inset-x-0 bottom-0 z-30 px-3 pb-[max(10px,env(safe-area-inset-bottom))] md:hidden"
     >
       <div className="grid h-[62px] grid-cols-5 rounded-[22px] bg-surface px-1 shadow-[var(--shadow-float)]">
-        {TABS.map(({ id, label, Icon }) => {
+        {TABS.map(({ id, Icon }) => {
           const active = tab === id;
           return (
             <button
@@ -37,7 +38,7 @@ export function TabBar() {
               )}
               <Icon className="relative size-[22px]" />
               <span className="relative text-[10px] font-semibold leading-none tracking-wide">
-                {label}
+                {text(tabLabel(id))}
               </span>
             </button>
           );

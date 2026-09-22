@@ -1,4 +1,5 @@
 import { noteCreatedTitle } from "@/lib/dates";
+import { text } from "@/i18n";
 
 export function notePreview(html: string): string {
   return html
@@ -22,9 +23,11 @@ export function displayNoteTitle(title: string, createdAt?: string): string {
   const trimmed = title.trim();
   if (trimmed.length > 0) return trimmed;
   if (createdAt) return noteCreatedTitle(new Date(createdAt));
-  return "Bez naslova";
+  return text("notes.untitled");
 }
 
 export function isDefaultNoteTitle(title: string, createdAt: string): boolean {
-  return title.trim() === noteCreatedTitle(new Date(createdAt));
+  const trimmed = title.trim();
+  const date = new Date(createdAt);
+  return trimmed === noteCreatedTitle(date, "sr") || trimmed === noteCreatedTitle(date, "en");
 }

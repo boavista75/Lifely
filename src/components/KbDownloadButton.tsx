@@ -1,4 +1,5 @@
 import { IconDownload } from "@/components/icons";
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { downloadKbNode } from "@/lib/kbDownload";
 import { reportMediaError } from "@/lib/media";
@@ -23,10 +24,10 @@ export function KbDownloadButton({
   const [busy, setBusy] = useState(false);
   const folder = node?.kind === "folder";
   const label = folder
-    ? "Preuzmi folder"
+    ? text("kb.downloadFolder")
     : node?.kind === "page"
-      ? "Preuzmi stranicu"
-      : "Preuzmi fajl";
+      ? text("kb.downloadPage")
+      : text("kb.downloadFile");
 
   async function onClick(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -36,7 +37,7 @@ export function KbDownloadButton({
       await beforeDownload?.();
       await downloadKbNode(useKbStore.getState().nodes, nodeId);
     } catch {
-      reportMediaError("Preuzimanje nije uspelo");
+      reportMediaError(text("kb.downloadFailed"));
     } finally {
       setBusy(false);
     }
@@ -52,7 +53,7 @@ export function KbDownloadButton({
         onClick={(event) => void onClick(event)}
         className="pressable min-h-11 rounded-full px-3 text-[16px] text-ink-secondary disabled:opacity-50"
       >
-        {busy ? "Preuzimanje…" : "Preuzmi"}
+        {busy ? text("kb.downloading") : text("kb.download")}
       </button>
     );
   }
@@ -60,7 +61,7 @@ export function KbDownloadButton({
   return (
     <button
       type="button"
-      aria-label={busy ? "Preuzimanje…" : label}
+      aria-label={busy ? text("kb.downloading") : label}
       aria-busy={busy}
       disabled={busy}
       onClick={(event) => void onClick(event)}

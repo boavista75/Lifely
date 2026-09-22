@@ -10,12 +10,17 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
+import { enUS } from "date-fns/locale/en-US";
 import { srLatn } from "date-fns/locale/sr-Latn";
+import { getLocale, type Locale } from "@/i18n/locale";
 
 export const WEEK_STARTS_ON = 1 as const;
 
-const locale = srLatn;
-const weekOptions = { weekStartsOn: WEEK_STARTS_ON, locale };
+const weekOptions = { weekStartsOn: WEEK_STARTS_ON };
+
+function dateLocale(locale: Locale = getLocale()) {
+  return locale === "en" ? enUS : srLatn;
+}
 
 export function capitalize(value: string): string {
   if (!value) return value;
@@ -47,26 +52,42 @@ export function isDateKeyToday(key: string): boolean {
 }
 
 export function monthTitle(date: Date): string {
-  return capitalize(format(date, "LLLL yyyy", { locale }));
+  return capitalize(format(date, "LLLL yyyy", { locale: dateLocale() }));
 }
 
 export function monthName(date: Date): string {
-  return capitalize(format(date, "LLLL", { locale }));
+  return capitalize(format(date, "LLLL", { locale: dateLocale() }));
 }
 
 export function fullDateTitle(date: Date): string {
-  return capitalize(format(date, "EEEE, d. MMMM", { locale }));
+  const locale = getLocale();
+  const pattern = locale === "en" ? "EEEE, MMMM d" : "EEEE, d. MMMM";
+  return capitalize(format(date, pattern, { locale: dateLocale(locale) }));
 }
 
 export function shortMonthDay(date: Date): string {
-  return format(date, "d. MMM", { locale });
+  const locale = getLocale();
+  const pattern = locale === "en" ? "MMM d" : "d. MMM";
+  return format(date, pattern, { locale: dateLocale(locale) });
 }
 
 export function weekdayShort(date: Date): string {
-  return capitalize(format(date, "EEE", { locale }));
+  return capitalize(format(date, "EEE", { locale: dateLocale() }));
 }
 
-export const WEEKDAY_LETTERS = ["P", "U", "S", "Č", "P", "S", "N"] as const;
+export function weekdayLetters(): string[] {
+  return getLocale() === "en"
+    ? ["M", "T", "W", "T", "F", "S", "S"]
+    : ["P", "U", "S", "Č", "P", "S", "N"];
+}
+
+export function weekdayLetter(day: Date): string {
+  const letters =
+    getLocale() === "en"
+      ? ["S", "M", "T", "W", "T", "F", "S"]
+      : ["N", "P", "U", "S", "Č", "P", "S"];
+  return letters[day.getDay()] ?? "";
+}
 
 export function getMonthGrid(cursor: Date): Date[] {
   const start = startOfWeek(startOfMonth(cursor), weekOptions);
@@ -114,9 +135,13 @@ export function nextDateKey(key: string): string {
   return toDateKey(addDays(parseDateKey(key), 1));
 }
 
-export function noteCreatedTitle(date: Date): string {
-  const day = format(date, "d.", { locale });
-  const month = capitalize(format(date, "LLLL", { locale }));
-  const time = format(date, "HH:mm", { locale });
+export function noteCreatedTitle(date: Date, locale: Locale = getLocale()): string {
+  const dateFnsLocale = dateLocale(locale);
+  const time = format(date, "HH:mm", { locale: dateFnsLocale });
+  if (locale === "en") {
+    return `${format(date, "MMMM d", { locale: dateFnsLocale })} - ${time}`;
+  }
+  const day = format(date, "d.", { locale: dateFnsLocale });
+  const month = capitalize(format(date, "LLLL", { locale: dateFnsLocale }));
   return `${day} ${month} - ${time}h`;
 }

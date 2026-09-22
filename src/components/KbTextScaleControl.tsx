@@ -1,4 +1,5 @@
 import { ToolButton } from "@/components/RichEditorToolbar";
+import { text } from "@/i18n";
 import {
   clampKbTextScale,
   KB_TEXT_SCALE_MAX,
@@ -20,14 +21,14 @@ export function KbTextScaleControl({
   return (
     <>
       <ToolButton
-        label="Smanji tekst na stranici"
+        label={text("kb.smallerText")}
         disabled={current <= KB_TEXT_SCALE_MIN}
         onClick={() => onChange(smaller)}
       >
         <span className="text-[12px] font-bold leading-none">A−</span>
       </ToolButton>
       <ToolButton
-        label="Povećaj tekst na stranici"
+        label={text("kb.largerText")}
         disabled={current >= KB_TEXT_SCALE_MAX}
         onClick={() => onChange(larger)}
       >

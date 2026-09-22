@@ -1,4 +1,5 @@
 import { FinanceConfirm } from "@/components/FinanceConfirm";
+import { text } from "@/i18n";
 import { IconClose, IconPlus } from "@/components/icons";
 import { Sheet } from "@/components/Sheet";
 import { cn } from "@/lib/cn";
@@ -7,7 +8,9 @@ import {
   BUCKETS,
   CATEGORY_LABEL_MAX,
   categoriesForBucket,
+  bucketMeta,
   categoryMeta,
+  displayCategoryLabel,
   findCategoryByLabelAny,
   parseAmount,
 } from "@/lib/finances";
@@ -30,15 +33,6 @@ type Props = {
   defaultMonth?: string;
   simple?: boolean;
 };
-
-const BUCKET_OPTIONS = BUCKETS.filter(
-  (entry): entry is (typeof BUCKETS)[number] & { id: SpendBucket } =>
-    entry.id !== "savings",
-).map((entry) => ({
-  value: entry.id,
-  label: entry.percent,
-  hint: entry.shortLabel,
-}));
 
 export function ExpenseSheet({
   open,
@@ -93,6 +87,14 @@ function ExpenseForm({
         ? categoryMeta(existing.category, categories).bucket
         : (bucket ?? null),
   );
+  const bucketOptions = BUCKETS.filter(
+    (entry): entry is (typeof BUCKETS)[number] & { id: SpendBucket } =>
+      entry.id !== "savings",
+  ).map((entry) => ({
+    value: entry.id,
+    label: entry.percent,
+    hint: bucketMeta(entry.id).shortLabel,
+  }));
   const options = useMemo(
     () =>
       simple
@@ -160,7 +162,7 @@ function ExpenseForm({
       bucket: spendBucket ?? "needs",
     });
     if (!created) {
-      setError("Unesite naziv kategorije");
+      setError(text("finance.categoryNameRequired"));
       newCategoryRef.current?.focus();
       return;
     }
@@ -181,21 +183,21 @@ function ExpenseForm({
 
   function save() {
     if (!simple && !spendBucket) {
-      setError("Izaberite grupu");
+      setError(text("finance.pickGroup"));
       return;
     }
     if (!category) {
-      setError("Izaberite kategoriju");
+      setError(text("finance.pickCategory"));
       return;
     }
     const parsed = parseAmount(amount);
     if (parsed === null) {
-      setError("Unesite iznos u dinarima");
+      setError(text("finance.amountRequired"));
       amountRef.current?.focus();
       return;
     }
     if (!date) {
-      setError("Izaberite datum");
+      setError(text("finance.pickDate"));
       return;
     }
     if (saving) return;
@@ -226,20 +228,20 @@ function ExpenseForm({
           onClick={onClose}
           className="pressable min-h-11 rounded-full px-2 text-[16px] text-ink-secondary"
         >
-          Otkaži
+          {text("common.cancel")}
         </button>
         <h2
           id="expense-sheet-title"
           className="font-display text-[18px] font-semibold tracking-[-0.02em]"
         >
-          {existing ? "Izmeni trošak" : "Unesi trošak"}
+          {existing ? text("finance.editExpense") : text("finance.expense")}
         </h2>
         <button
           type="submit"
           disabled={saving}
           className="pressable min-h-11 rounded-full px-2 text-[16px] font-semibold text-accent disabled:opacity-50"
         >
-          {existing ? "Sačuvaj" : "Dodaj"}
+          {existing ? text("common.save") : text("common.add")}
         </button>
       </header>
 
@@ -247,10 +249,10 @@ function ExpenseForm({
         {!simple && !bucketLocked && (
           <div className="mb-4">
             <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-              Prvo izaberi grupu
+              {text("finance.chooseGroup")}
             </span>
             <div className="grid grid-cols-2 gap-2">
-              {BUCKET_OPTIONS.map((entry) => {
+              {bucketOptions.map((entry) => {
                 const selected = entry.value === spendBucket;
                 return (
                   <button
@@ -285,7 +287,7 @@ function ExpenseForm({
         {(simple || spendBucket) && (
           <div className="mb-4">
             <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-              Kategorija
+              {text("finance.category")}
             </span>
             <div className="flex flex-wrap gap-2">
               {options.map((entry) => {
@@ -310,11 +312,11 @@ function ExpenseForm({
                       }}
                       className="min-h-10 text-[13px] font-medium"
                     >
-                      {entry.label}
+                      {displayCategoryLabel(entry)}
                     </button>
                     <button
                       type="button"
-                      aria-label={`Obriši kategoriju ${entry.label}`}
+                      aria-label={text("finance.deleteCategory", { name: displayCategoryLabel(entry) })}
                       onClick={() => setPendingDelete(entry)}
                       className={cn(
                         "grid size-8 shrink-0 place-items-center rounded-full",
@@ -329,7 +331,7 @@ function ExpenseForm({
               {!addingCategory && (
                 <button
                   type="button"
-                  aria-label="Nova kategorija"
+                  aria-label={text("finance.newCategory")}
                   onClick={() => {
                     setAddingCategory(true);
                     setNewCategoryLabel("");
@@ -338,7 +340,7 @@ function ExpenseForm({
                   className="flex min-h-10 items-center gap-1 rounded-full bg-surface-2 px-3.5 text-[13px] font-medium text-ink-secondary"
                 >
                   <IconPlus className="size-3.5" />
-                  Nova
+                  {text("finance.new")}
                 </button>
               )}
             </div>
@@ -363,7 +365,7 @@ function ExpenseForm({
                       setNewCategoryLabel("");
                     }
                   }}
-                  placeholder="Naziv kategorije"
+                  placeholder={text("finance.categoryName")}
                   maxLength={CATEGORY_LABEL_MAX}
                   className="field min-w-0 flex-1"
                 />
@@ -372,7 +374,7 @@ function ExpenseForm({
                   onClick={submitNewCategory}
                   className="pressable shrink-0 rounded-full px-3 text-[14px] font-semibold text-accent"
                 >
-                  Dodaj
+                  {text("common.add")}
                 </button>
                 <button
                   type="button"
@@ -382,7 +384,7 @@ function ExpenseForm({
                   }}
                   className="pressable shrink-0 rounded-full px-2 text-[14px] text-ink-secondary"
                 >
-                  Otkaži
+                  {text("common.cancel")}
                 </button>
               </div>
             )}
@@ -391,7 +393,7 @@ function ExpenseForm({
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Iznos (RSD)
+            {text("finance.amountRsd")}
           </span>
           <input
             ref={amountRef}
@@ -401,14 +403,14 @@ function ExpenseForm({
               setAmount(event.target.value);
               if (error) setError(null);
             }}
-            placeholder="npr. 2.500"
+            placeholder={text("finance.expenseExample")}
             className="field tabular-nums"
           />
         </label>
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Datum
+            {text("item.date")}
           </span>
           <input
             type="date"
@@ -435,13 +437,24 @@ function ExpenseForm({
 
       <FinanceConfirm
         open={pendingDelete !== null}
-        title="Obrisati kategoriju?"
+        title={text("finance.deleteCategoryTitle")}
         body={
-          pendingDeleteCount > 0
-            ? `„${pendingDelete?.label}“ i ${pendingDeleteCount === 1 ? "1 povezani trošak" : `${pendingDeleteCount} povezanih troškova`} će biti uklonjeni.`
-            : `„${pendingDelete?.label ?? ""}“ će biti uklonjena iz liste.`
+          pendingDelete
+            ? pendingDeleteCount > 1
+              ? text("finance.deleteCategoryWith", {
+                  name: displayCategoryLabel(pendingDelete),
+                  count: pendingDeleteCount,
+                })
+              : pendingDeleteCount === 1
+                ? text("finance.deleteCategoryOne", {
+                    name: displayCategoryLabel(pendingDelete),
+                  })
+                : text("finance.deleteCategoryOnly", {
+                    name: displayCategoryLabel(pendingDelete),
+                  })
+            : ""
         }
-        confirmLabel="Obriši"
+        confirmLabel={text("common.delete")}
         danger
         onCancel={() => setPendingDelete(null)}
         onConfirm={confirmDeleteCategory}

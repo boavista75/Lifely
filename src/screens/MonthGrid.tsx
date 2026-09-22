@@ -1,8 +1,9 @@
 import { KbLinkButton } from "@/components/KbLinkButton";
+import { text } from "@/i18n";
 import { NoteLinkButton } from "@/components/NoteLinkButton";
 import { useCalendarDrag } from "@/hooks/useCalendarItemDrag";
 import { cn } from "@/lib/cn";
-import { dayIsToday, toDateKey } from "@/lib/dates";
+import { dayIsToday, toDateKey, weekdayLetter } from "@/lib/dates";
 import { formatItemTime } from "@/lib/items";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import type { LifelyItem } from "@/types";
@@ -55,7 +56,7 @@ export function MonthGrid({
               onClick={() => onSelect(day)}
               aria-current={today ? "date" : undefined}
               aria-label={
-                dayItems.length === 0 ? `Dodaj stavku za ${key}` : key
+                dayItems.length === 0 ? text("calendar.addItem", { date: key }) : key
               }
               className="absolute inset-0 z-0"
             />
@@ -124,7 +125,7 @@ function DayChips({
           <button
             key={item.id}
             type="button"
-            aria-label={`Prevuci „${item.title}“ na drugi dan`}
+            aria-label={text("calendar.dragItem", { title: item.title })}
             onPointerDown={(event) =>
               onPointerDown(item, event, { immediate: true })
             }
@@ -214,7 +215,7 @@ export function WeekGrid({
                   type="button"
                   onClick={() => onSelectDay(day)}
                   className="hidden min-h-8 w-full md:block"
-                  aria-label={`Dodaj stavku za ${key}`}
+                  aria-label={text("calendar.addItem", { date: key })}
                 />
               ) : (
                 dayItems.map((item) => (
@@ -227,7 +228,7 @@ export function WeekGrid({
                   >
                     <button
                       type="button"
-                      aria-label={`Prevuci „${item.title}“ na drugi dan`}
+                      aria-label={text("calendar.dragItem", { title: item.title })}
                       onPointerDown={(event) => onItemPointerDown(item, event)}
                       onClick={() => {
                         if (consumeDragClick()) return;
@@ -270,10 +271,6 @@ export function WeekGrid({
   );
 }
 
-function weekdayLetter(day: Date): string {
-  const letters = ["N", "P", "U", "S", "Č", "P", "S"];
-  return letters[day.getDay()] ?? "";
-}
 
 function dropTarget(dateKey: string, overDate: string | null): string | undefined {
   if (!overDate || overDate !== dateKey) return undefined;

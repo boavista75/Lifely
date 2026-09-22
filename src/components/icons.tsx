@@ -261,11 +261,31 @@ export function IconVideo(props: IconProps) {
   );
 }
 
-export function IconYoutube(props: IconProps) {
+export function IconEye(props: IconProps) {
   return (
     <svg {...base(props)}>
-      <rect x="3" y="6.5" width="18" height="11" rx="3" />
-      <path d="M10.5 9.5v5l5-2.5-5-2.5Z" />
+      <path d="M2.8 12S6.2 6.8 12 6.8 21.2 12 21.2 12 17.8 17.2 12 17.2 2.8 12 2.8 12Z" />
+      <circle cx="12" cy="12" r="2.4" />
+    </svg>
+  );
+}
+
+export function IconEyeOff(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 5.2 19.2 18.8" />
+      <path d="M9.4 6.9A9 9 0 0 1 12 6.8c5.8 0 9.2 5.2 9.2 5.2a16 16 0 0 1-3.1 3.5" />
+      <path d="M6.3 8.3C4.2 9.8 2.8 12 2.8 12S6.2 17.2 12 17.2c1 0 2-.2 2.9-.5" />
+      <path d="M10 10.3a2.4 2.4 0 0 0 3.3 3.4" />
+    </svg>
+  );
+}
+
+export function IconUser(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="8" r="3.25" />
+      <path d="M5.5 19.2c.8-2.8 3.2-4.4 6.5-4.4s5.7 1.6 6.5 4.4" />
     </svg>
   );
 }

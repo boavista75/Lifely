@@ -1,4 +1,5 @@
 import { IconClose, IconFolder, IconKnowledge } from "@/components/icons";
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import {
   displayKbTitle,
@@ -149,7 +150,7 @@ export function KbPagePicker({ value, onChange }: Props) {
   return (
     <div ref={rootRef} className="relative mb-4">
       <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-        Knowledge
+        {text("nav.knowledge")}
       </span>
       <div className="flex gap-2">
         <button
@@ -176,7 +177,7 @@ export function KbPagePicker({ value, onChange }: Props) {
         </button>
         <button
           type="button"
-          aria-label="Ukini vezu sa stranicom"
+          aria-label={text("kb.unlink")}
           disabled={!value}
           onClick={() => {
             onChange(null);
@@ -193,7 +194,7 @@ export function KbPagePicker({ value, onChange }: Props) {
           <div
             ref={panelRef}
             role="listbox"
-            aria-label="Knowledge dokumenti"
+            aria-label={text("kb.documents")}
             className="fixed z-[65] overflow-y-auto overscroll-contain rounded-2xl bg-surface py-1.5 shadow-[var(--shadow-float)] ring-1 ring-ink/18"
             style={{
               left: pos.left,
@@ -205,7 +206,7 @@ export function KbPagePicker({ value, onChange }: Props) {
           >
             {docCount === 0 ? (
               <p className="px-3.5 py-3 text-[13px] text-ink-tertiary">
-                Nema stranica
+                {text("kb.noPages")}
               </p>
             ) : (
               groups.map(([path, docs]) => (
@@ -217,7 +218,7 @@ export function KbPagePicker({ value, onChange }: Props) {
                       <IconKnowledge className="size-3.5 shrink-0 text-ink-tertiary" />
                     )}
                     <span className="min-w-0 truncate">
-                      {path || "Na početku"}
+                      {path || text("kb.root")}
                     </span>
                   </div>
                   {docs.map((doc) => {

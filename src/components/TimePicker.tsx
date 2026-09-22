@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { useIsDesktop } from "@/hooks/useMediaQuery";
 import { useEffect, useLayoutEffect, useRef } from "react";
@@ -48,7 +49,7 @@ export function TimePicker({ label, value, onChange }: Props) {
             className="pointer-events-none absolute inset-x-2 top-1/2 z-10 h-10 -translate-y-1/2 rounded-lg bg-ink/[0.06]"
           />
           <Wheel
-            label="Sat"
+            label={text("item.hour")}
             values={HOURS}
             value={hourValue}
             onChange={setHour}
@@ -57,7 +58,7 @@ export function TimePicker({ label, value, onChange }: Props) {
             :
           </span>
           <Wheel
-            label="Minut"
+            label={text("item.minute")}
             values={MINUTES}
             value={minuteValue}
             onChange={setMinute}

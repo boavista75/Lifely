@@ -1,4 +1,5 @@
 import { IconChevron } from "@/components/icons";
+import { text } from "@/i18n";
 import { KbDownloadButton } from "@/components/KbDownloadButton";
 import { KB_FILE_UNOPENABLE } from "@/lib/kbFilePreview";
 import { renderOfficeDocument } from "@/lib/kbOffice";
@@ -67,7 +68,7 @@ export function KbOfficeViewer({ fileId }: { fileId: string }) {
           className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
         >
           <IconChevron className="size-5" />
-          Knowledge
+          {text("nav.knowledge")}
         </button>
         <div className="flex shrink-0 items-center">
           <KbDownloadButton nodeId={file.id} variant="label" />
@@ -76,7 +77,7 @@ export function KbOfficeViewer({ fileId }: { fileId: string }) {
             onClick={() => requestDeleteKb("kb-file", file.id)}
             className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
           >
-            Obriši
+            {text("common.delete")}
           </button>
         </div>
       </header>
@@ -88,7 +89,7 @@ export function KbOfficeViewer({ fileId }: { fileId: string }) {
       <div className="relative min-h-0 flex-1 overflow-hidden px-3 pb-4 md:px-6">
         {loading ? (
           <p className="absolute inset-0 z-10 grid place-items-center text-[15px] text-ink-secondary">
-            Učitavanje…
+            {text("common.loading")}
           </p>
         ) : null}
         {error ? (

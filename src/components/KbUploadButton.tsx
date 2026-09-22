@@ -1,4 +1,5 @@
 import { Sheet } from "@/components/Sheet";
+import { text } from "@/i18n";
 import { IconFile, IconFolder, IconUpload } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import {
@@ -50,14 +51,14 @@ export function useKbUpload(onImported: (expandIds: string[]) => void) {
         const names = result.skippedLarge.slice(0, 3).join(", ");
         const extra =
           result.skippedLarge.length > 3
-            ? ` i još ${result.skippedLarge.length - 3}`
+            ? text("kb.skippedMore", { count: result.skippedLarge.length - 3 })
             : "";
-        setMessage(`Preskočeno (maks. ${maxMb} MB): ${names}${extra}`);
+        setMessage(text("kb.skipped", { max: maxMb, names, extra }));
       } else if (result.imported === 0) {
-        setMessage("Nema fajlova za otpremanje");
+        setMessage(text("kb.uploadEmpty"));
       }
     } catch {
-      setMessage("Otpremanje nije uspelo");
+      setMessage(text("kb.uploadFailed"));
     } finally {
       setBusy(false);
       setDragging(false);
@@ -97,7 +98,7 @@ export function useKbUpload(onImported: (expandIds: string[]) => void) {
           id="kb-upload-title"
           className="font-display text-[22px] font-semibold tracking-[-0.02em]"
         >
-          Otpremi
+          {text("kb.upload")}
         </h2>
         <div
           onDragEnter={(event) => {
@@ -126,10 +127,10 @@ export function useKbUpload(onImported: (expandIds: string[]) => void) {
         >
           <IconUpload className="size-7 text-accent" />
           <span className="mt-2 text-[15px] font-medium">
-            {busy ? "Otpremanje…" : "Prevuci fajlove ili foldere"}
+            {busy ? text("kb.uploading") : text("kb.drop")}
           </span>
           <span className="mt-1 text-[13px] text-ink-secondary">
-            ili izaberi sa računara
+            {text("kb.uploadHint")}
           </span>
           <div className="mt-4 flex w-full max-w-sm gap-2">
             <button
@@ -139,7 +140,7 @@ export function useKbUpload(onImported: (expandIds: string[]) => void) {
               className="pressable flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-surface px-3 text-[14px] font-medium shadow-sm"
             >
               <IconFile className="size-4 text-ink-secondary" />
-              Fajlovi
+              {text("kb.files")}
             </button>
             <button
               type="button"
@@ -148,7 +149,7 @@ export function useKbUpload(onImported: (expandIds: string[]) => void) {
               className="pressable flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-surface px-3 text-[14px] font-medium shadow-sm"
             >
               <IconFolder className="size-4 text-ink-secondary" />
-              Folder
+              {text("kb.folders")}
             </button>
           </div>
         </div>
@@ -189,7 +190,7 @@ export function KbUploadButton({
   return (
     <button
       type="button"
-      aria-label="Otpremi"
+      aria-label={text("kb.upload")}
       disabled={busy}
       onClick={onOpen}
       className={

@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import {
   IconClose,
   IconFolder,
@@ -171,15 +172,15 @@ export function KbPageLinkControl({
   return (
     <div ref={buttonRef} className="flex shrink-0">
       <ToolButton
-        label="Link"
+        label={text("kb.link")}
         active={open || editor.isActive("link")}
         onClick={toggle}
       >
-        <span className="text-[13px] font-semibold underline">Link</span>
+        <span className="text-[13px] font-semibold underline">{text("kb.link")}</span>
       </ToolButton>
       <button
         type="button"
-        aria-label="Ukini link"
+        aria-label={text("kb.unlinkLink")}
         disabled={!editor.isActive("link")}
         onMouseDown={(event) => event.preventDefault()}
         onClick={unlink}
@@ -196,7 +197,7 @@ export function KbPageLinkControl({
           <div
             ref={panelRef}
             role="dialog"
-            aria-label="Link"
+            aria-label={text("kb.link")}
             onMouseDown={(event) => {
               if ((event.target as HTMLElement).closest("form")) return;
               event.preventDefault();
@@ -226,7 +227,7 @@ export function KbPageLinkControl({
                   placeholder="https://…"
                   value={urlDraft}
                   aria-invalid={urlError}
-                  aria-label="Internet adresa"
+                  aria-label={text("kb.address")}
                   onChange={(event) => {
                     setUrlDraft(event.target.value);
                     setUrlError(false);
@@ -240,34 +241,34 @@ export function KbPageLinkControl({
                   type="submit"
                   className="h-10 shrink-0 rounded-xl px-3 text-[13px] font-medium text-accent"
                 >
-                  Dodaj
+                  {text("common.add")}
                 </button>
               </div>
               {urlError ? (
                 <p className="px-1 text-[12px] text-danger">
-                  Unesi ispravan internet link
+                  {text("kb.badLink")}
                 </p>
               ) : null}
             </form>
             {linkedWeb ? (
               <p className="shrink-0 px-3.5 pb-1 text-[12px] font-medium text-ink-secondary">
-                Povezano: {displayWebHref(linkedWeb)}
+                {text("kb.linked", { name: displayWebHref(linkedWeb) })}
               </p>
             ) : linked ? (
               <p className="shrink-0 px-3.5 pb-1 text-[12px] font-medium text-ink-secondary">
-                Povezano: {displayKbTitle(linked.title, linked.createdAt)}
+                {text("kb.linked", { name: displayKbTitle(linked.title, linked.createdAt) })}
               </p>
             ) : null}
             <div
               role="listbox"
-              aria-label="Knowledge"
+              aria-label={text("nav.knowledge")}
               className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
             >
               {docCount === 0 ? (
                 <p className="px-3.5 py-3 text-[13px] text-ink-tertiary">
                   {currentPageId
-                    ? "Nema drugih dokumenata"
-                    : "Nema dokumenata"}
+                    ? text("kb.noOtherDocs")
+                    : text("kb.noDocs")}
                 </p>
               ) : (
                 groups.map(([path, docs]) => (
@@ -279,7 +280,7 @@ export function KbPageLinkControl({
                         <IconKnowledge className="size-3.5 shrink-0 text-ink-tertiary" />
                       )}
                       <span className="min-w-0 truncate">
-                        {path || "Na početku"}
+                        {path || text("kb.root")}
                       </span>
                     </div>
                     {docs.map((doc) => (

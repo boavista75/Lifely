@@ -1,4 +1,5 @@
 import { ToolButton } from "@/components/RichEditorToolbar";
+import { text } from "@/i18n";
 import { IconImage, IconVideo } from "@/components/icons";
 import { insertMediaFiles } from "@/lib/kbMedia";
 import type { Editor } from "@tiptap/react";
@@ -16,13 +17,13 @@ export function KbMediaControl({ editor }: { editor: Editor }) {
   return (
     <>
       <ToolButton
-        label="Ubaci sliku"
+        label={text("kb.insertImage")}
         onClick={() => imageRef.current?.click()}
       >
         <IconImage className="size-4" />
       </ToolButton>
       <ToolButton
-        label="Ubaci video"
+        label={text("kb.insertVideo")}
         onClick={() => videoRef.current?.click()}
       >
         <IconVideo className="size-4" />

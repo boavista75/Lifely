@@ -1,4 +1,5 @@
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { text } from "@/i18n";
 import {
   IconAlignCenter,
   IconAlignLeft,
@@ -121,32 +122,32 @@ function KbMediaFrame({
             className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-2xl bg-surface p-0.5 shadow-[var(--shadow-float)]"
           >
             <MediaTool
-              label="Levo"
+              label={text("editor.alignLeft")}
               active={align === "left"}
               onClick={() => setAlign("left")}
             >
               <IconAlignLeft className="size-4" />
             </MediaTool>
             <MediaTool
-              label="Centar"
+              label={text("editor.alignCenter")}
               active={align === "center"}
               onClick={() => setAlign("center")}
             >
               <IconAlignCenter className="size-4" />
             </MediaTool>
             <MediaTool
-              label="Desno"
+              label={text("editor.alignRight")}
               active={align === "right"}
               onClick={() => setAlign("right")}
             >
               <IconAlignRight className="size-4" />
             </MediaTool>
             {kind === "image" ? (
-              <MediaTool label="Kropuj" onClick={() => setCropOpen(true)}>
+              <MediaTool label={text("crop.title")} onClick={() => setCropOpen(true)}>
                 <IconCrop className="size-4" />
               </MediaTool>
             ) : null}
-            <MediaTool label="Ukloni" onClick={deleteNode}>
+            <MediaTool label={text("profile.removePhoto")} onClick={deleteNode}>
               <IconClose className="size-4" />
             </MediaTool>
           </div>
@@ -173,7 +174,7 @@ function KbMediaFrame({
           )
         ) : (
           <div className="grid h-32 place-items-center rounded-xl bg-surface-2 text-[13px] text-ink-tertiary">
-            Učitavanje…
+            {text("common.loading")}
           </div>
         )}
         {selected ? (
@@ -249,7 +250,7 @@ function ResizeHandle({
   return (
     <button
       type="button"
-      aria-label="Promeni veličinu"
+      aria-label={text("kb.resize")}
       data-media-ui
       onPointerDown={onPointerDown}
       className={cn(

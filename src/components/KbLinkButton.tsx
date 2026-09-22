@@ -1,4 +1,5 @@
 import { IconKnowledge } from "@/components/icons";
+import { text } from "@/i18n";
 import { isKbFile, isKbPage } from "@/lib/kb";
 import { useKbStore } from "@/store/useKbStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -19,7 +20,7 @@ export function KbLinkButton({
   return (
     <button
       type="button"
-      aria-label="Otvori Knowledge stranicu"
+      aria-label={text("item.openPage")}
       onClick={(event) => {
         event.stopPropagation();
         openLinkedKbPage(pageId, page?.parentId ?? null);

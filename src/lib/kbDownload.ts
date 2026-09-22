@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import {
   childrenOf,
   displayKbTitle,
@@ -141,7 +142,7 @@ async function zipFolder(
   folderId: string,
 ): Promise<{ blob: Blob; name: string }> {
   const folder = nodes.find((node) => node.id === folderId && isKbFolder(node));
-  if (!folder) throw new Error("Folder nije pronađen");
+  if (!folder) throw new Error(text("kb.folderMissing"));
   const rootName = safeDownloadName(folder.title, "folder");
   const media = await loadMediaMany(collectMediaIds(nodes, folderId));
   const used = new Set<string>([rootName.toLowerCase()]);
@@ -190,7 +191,7 @@ export async function downloadKbNode(
   id: string,
 ): Promise<void> {
   const node = nodes.find((entry) => entry.id === id);
-  if (!node) throw new Error("Stavka nije pronađena");
+  if (!node) throw new Error(text("kb.itemMissing"));
   if (isKbFolder(node)) {
     const zip = await zipFolder(nodes, node.id);
     triggerDownload(zip.blob, zip.name);
@@ -207,7 +208,7 @@ export async function downloadKbNode(
     ? await loadMediaMany([node.mediaId])
     : new Map<string, Blob>();
   const payload = await uploadedFilePayload(node, media);
-  if (!payload) throw new Error("Fajl nije pronađen");
+  if (!payload) throw new Error(text("kb.fileMissing"));
   triggerDownload(
     new Blob([Uint8Array.from(payload.bytes).buffer], { type: payload.type }),
     payload.name,

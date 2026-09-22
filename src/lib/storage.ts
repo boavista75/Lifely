@@ -22,6 +22,14 @@ import {
   isPaletteId,
   type PaletteId,
 } from "@/lib/palettes";
+import {
+  cloudActive,
+  readCloud,
+  writeCloudFinances,
+  writeCloudItems,
+  writeCloudNodes,
+  writeCloudNotes,
+} from "@/lib/cloud";
 import type {
   ExpenseCategory,
   ExpenseCategoryDef,
@@ -134,6 +142,7 @@ function isNote(value: unknown): value is LifelyNote {
 }
 
 export function loadItems(): LifelyItem[] {
+  if (cloudActive()) return readCloud().items;
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(ITEMS_KEY);
@@ -165,6 +174,10 @@ export function loadItems(): LifelyItem[] {
 }
 
 export function saveItems(items: LifelyItem[]): void {
+  if (cloudActive()) {
+    writeCloudItems(items);
+    return;
+  }
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
@@ -174,6 +187,7 @@ export function saveItems(items: LifelyItem[]): void {
 }
 
 export function loadNotes(): LifelyNote[] {
+  if (cloudActive()) return readCloud().notes;
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(NOTES_KEY);
@@ -187,6 +201,10 @@ export function loadNotes(): LifelyNote[] {
 }
 
 export function saveNotes(notes: LifelyNote[]): void {
+  if (cloudActive()) {
+    writeCloudNotes(notes);
+    return;
+  }
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
@@ -243,6 +261,7 @@ function withTextScale(node: LifelyKbNode): LifelyKbNode {
 }
 
 export function loadKb(): LifelyKbNode[] {
+  if (cloudActive()) return readCloud().nodes;
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(KB_KEY);
@@ -266,6 +285,10 @@ export function loadKb(): LifelyKbNode[] {
 }
 
 export function saveKb(nodes: LifelyKbNode[]): void {
+  if (cloudActive()) {
+    writeCloudNodes(nodes);
+    return;
+  }
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(KB_KEY, JSON.stringify(nodes));
@@ -501,6 +524,7 @@ function isSaving(value: unknown): value is FinanceSaving {
 }
 
 export function loadFinances(): FinanceData {
+  if (cloudActive()) return readCloud().finances;
   if (typeof localStorage === "undefined") return EMPTY_FINANCE_DATA;
   try {
     const raw = localStorage.getItem(FINANCES_KEY);
@@ -551,7 +575,19 @@ export function loadFinances(): FinanceData {
   }
 }
 
+export function clearLocalUserData(): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.removeItem(ITEMS_KEY);
+  localStorage.removeItem(NOTES_KEY);
+  localStorage.removeItem(KB_KEY);
+  localStorage.removeItem(FINANCES_KEY);
+}
+
 export function saveFinances(data: FinanceData): void {
+  if (cloudActive()) {
+    writeCloudFinances(data);
+    return;
+  }
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(FINANCES_KEY, JSON.stringify(data));

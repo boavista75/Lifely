@@ -1,4 +1,5 @@
 import { BonusSheet } from "@/components/BonusSheet";
+import { text } from "@/i18n";
 import { ExpenseSheet } from "@/components/ExpenseSheet";
 import { FinanceConfirm } from "@/components/FinanceConfirm";
 import { SalarySheet } from "@/components/SalarySheet";
@@ -17,6 +18,7 @@ import {
   bucketMeta,
   categoriesForBucket,
   categoryMeta,
+  displayCategoryLabel,
   currentMonthKey,
   expenseDateHeading,
   formatExpenseDate,
@@ -114,7 +116,7 @@ export function FinancesScreen() {
       ? bucketMeta(view.bucket).label
       : historyMonth
         ? monthTitleFromKey(historyMonth)
-        : "Finansije";
+        : text("nav.finances");
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
@@ -123,7 +125,7 @@ export function FinancesScreen() {
         onBack={view.kind !== "root" || historyMonth ? back : undefined}
         subtitle={
           onHistoryList ? (
-            <p className="mt-1 text-[14px] text-ink-secondary">Istorija</p>
+            <p className="mt-1 text-[14px] text-ink-secondary">{text("finance.history")}</p>
           ) : view.kind === "bucket" ? (
             <p className="mt-1 text-[14px] text-ink-secondary">
               {bucketMeta(view.bucket).percent} · {monthTitleFromKey(view.month)}
@@ -195,9 +197,9 @@ export function FinancesScreen() {
                   <>
                     {showSalaryBanner && (
                       <ReminderCard
-                        title="Unesi platu"
-                        body={`10. je u mesecu — unesi platu za ${monthTitleFromKey(currentMonthKey())}.`}
-                        action="Unesi platu"
+                        title={text("finance.salaryTitle")}
+                        body={text("finance.salaryBody", { month: monthTitleFromKey(currentMonthKey()) })}
+                        action={text("finance.salaryTitle")}
                         onAction={() => setSheet({ type: "salary" })}
                         onDismiss={() =>
                           data.dismissSalaryReminder(currentMonthKey())
@@ -206,10 +208,10 @@ export function FinancesScreen() {
                     )}
                     {showExpenseBanner && (
                       <ReminderCard
-                        title="Unesi troškove"
-                        body="Podsetnik: unesi sve današnje troškove ako već nisi."
-                        action="Unesi trošak"
-                        secondary="Nisam trošio"
+                        title={text("finance.reminderExpensesTitle")}
+                        body={text("finance.reminderExpensesBody")}
+                        action={text("finance.expense")}
+                        secondary={text("finance.notSpent")}
                         onAction={() => setSheet({ type: "expense" })}
                         onSecondary={() => data.confirmNoSpendToday(todayKey())}
                         onDismiss={() =>
@@ -219,9 +221,9 @@ export function FinancesScreen() {
                     )}
                     {showNotifyPrompt && (
                       <ReminderCard
-                        title="Obaveštenja"
-                        body="Uključi podsetnik 10. u mesecu za platu i svako veče u 22h za troškove."
-                        action="Uključi"
+                        title={text("finance.notificationsTitle")}
+                        body={text("finance.notificationsBody")}
+                        action={text("finance.enable")}
                         onAction={async () => {
                           const result = await requestFinanceNotifications();
                           setNotifyState(result);
@@ -269,9 +271,9 @@ export function FinancesScreen() {
       />
       <FinanceConfirm
         open={resetOpen}
-        title="Resetovati finansije?"
-        body="Svi meseci, plate, troškovi, ušteđevina i bonus uplate biće obrisani. Ovo je za testiranje."
-        confirmLabel="Resetuj"
+        title={text("finance.resetTitle")}
+        body={text("finance.resetBody")}
+        confirmLabel={text("finance.reset")}
         danger
         onCancel={() => setResetOpen(false)}
         onConfirm={() => {
@@ -316,14 +318,14 @@ function MonthOverview({
           onClick={onExpense}
           className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-surface text-[15px] font-semibold shadow-[var(--shadow-card)]"
         >
-          Unesi trošak
+          {text("finance.expense")}
         </button>
         <button
           type="button"
           onClick={onBonus}
           className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-surface text-[15px] font-semibold shadow-[var(--shadow-card)]"
         >
-          Uplata van plate
+          {text("finance.bonusTitle")}
         </button>
       </div>
     </div>
@@ -378,14 +380,14 @@ function SimpleMonthOverview({
               onClick={onExpense}
               className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-accent text-[16px] font-semibold text-accent-fg"
             >
-              Unesi trošak
+              {text("finance.expense")}
             </button>
             <button
               type="button"
               onClick={onSave}
               className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-surface text-[15px] font-semibold shadow-[var(--shadow-card)]"
             >
-              Uštedi
+              {text("finance.saveMoney")}
             </button>
           </div>
           <button
@@ -393,7 +395,7 @@ function SimpleMonthOverview({
             onClick={onBonus}
             className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-surface text-[15px] font-semibold shadow-[var(--shadow-card)]"
           >
-            Uplata van plate
+            {text("finance.bonusTitle")}
           </button>
         </div>
 
@@ -409,7 +411,7 @@ function SimpleMonthOverview({
                   return (
                     <div key={cat.id}>
                       <div className="mb-1 flex items-baseline justify-between gap-2 text-[13px]">
-                        <span>{cat.label}</span>
+                        <span>{displayCategoryLabel(cat)}</span>
                         <span className="tabular-nums text-ink-secondary">
                           {formatRsd(value)}
                         </span>
@@ -431,7 +433,7 @@ function SimpleMonthOverview({
 
           {summary.expenses.length === 0 && summary.bonuses.length === 0 ? (
             <p className="px-2 py-6 text-center text-[14px] text-ink-secondary lg:py-16">
-              Nema unetih troškova. Unesi trošak ili uštedi deo novca.
+              {text("finance.noExpenses")}
             </p>
           ) : (
             <div className="flex flex-col gap-4">
@@ -451,7 +453,7 @@ function SimpleMonthOverview({
                       className="card flex items-center gap-3 rounded-[20px] px-4 py-3"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-[15px] font-medium">Bonus uplata</p>
+                        <p className="text-[15px] font-medium">{text("finance.bonusEntry")}</p>
                         <p className="text-[12px] text-ink-secondary">
                           {formatExpenseDate(entry.date)}
                         </p>
@@ -466,7 +468,7 @@ function SimpleMonthOverview({
                         }
                         className="pressable text-[13px] text-danger"
                       >
-                        Obriši
+                        {text("common.delete")}
                       </button>
                     </div>
                   ))}
@@ -481,7 +483,7 @@ function SimpleMonthOverview({
               onClick={() => setPending({ kind: "saving", month: summary.month })}
               className="pressable text-center text-[13px] font-medium text-danger"
             >
-              Otključaj ušteđevinu
+              {text("finance.unlockSavings")}
             </button>
           )}
         </div>
@@ -491,17 +493,17 @@ function SimpleMonthOverview({
         open={pending !== null}
         title={
           pending?.kind === "bonus"
-            ? "Obrisati uplatu?"
+            ? text("finance.deletePaymentTitle")
             : pending?.kind === "saving"
-              ? "Otključati ušteđevinu?"
-              : "Obrisati trošak?"
+              ? text("finance.unlockTitle")
+              : text("finance.deleteExpenseTitle")
         }
         body={
           pending?.kind === "saving"
-            ? "Zaključani iznos će se vratiti u ukupan novac za ovaj mesec."
-            : "Stavka će biti uklonjena iz ovog meseca."
+            ? text("finance.unlockBody")
+            : text("finance.removeBody")
         }
-        confirmLabel={pending?.kind === "saving" ? "Otključaj" : "Obriši"}
+        confirmLabel={pending?.kind === "saving" ? text("finance.unlock") : text("common.delete")}
         danger
         onCancel={() => setPending(null)}
         onConfirm={() => {
@@ -528,15 +530,15 @@ function SplitToggle({
         <p className="text-[15px] font-semibold">50 / 30 / 20</p>
         <p className="mt-0.5 text-[13px] leading-5 text-ink-secondary">
           {enabled
-            ? "Podela plate na housings, funnymoney i ušteđevinu"
-            : "Jedan budžet — ukupan novac, troškovi i ušteda"}
+            ? text("finance.splitOn")
+            : text("finance.splitOff")}
         </p>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={enabled}
-        aria-label="Podela 50/30/20"
+        aria-label={text("finance.splitAria")}
         onClick={() => onChange(!enabled)}
         className={cn(
           "relative h-8 w-[52px] shrink-0 rounded-full transition-colors duration-200",
@@ -563,7 +565,7 @@ function SimpleBalanceCard({
 }) {
   return (
     <div className="card rounded-[28px] px-5 py-6">
-      <p className="text-[13px] font-medium text-ink-secondary">Ukupno ostalo</p>
+      <p className="text-[13px] font-medium text-ink-secondary">{text("finance.leftTotal")}</p>
       <p
         className={cn(
           "mt-1 font-display text-[40px] font-semibold leading-[0.95] tracking-[-0.03em] tabular-nums",
@@ -574,19 +576,19 @@ function SimpleBalanceCard({
       </p>
       <div className="mt-4 space-y-1.5 text-[15px]">
         <p className="flex items-baseline justify-between gap-3">
-          <span className="text-ink-secondary">Plata</span>
+          <span className="text-ink-secondary">{text("finance.salaryLabel")}</span>
           <span className="font-semibold tabular-nums">
             {formatRsd(summary.salary)}
           </span>
         </p>
         <p className="flex items-baseline justify-between gap-3">
-          <span className="text-ink-secondary">Bonus uplate</span>
+          <span className="text-ink-secondary">{text("finance.bonusPayments")}</span>
           <span className="font-semibold tabular-nums">
             {formatRsd(summary.totalBonus)}
           </span>
         </p>
         <p className="flex items-baseline justify-between gap-3">
-          <span className="text-ink-secondary">Troškovi</span>
+          <span className="text-ink-secondary">{text("finance.expenses")}</span>
           <span className="font-semibold tabular-nums">
             −{formatRsd(summary.totalSpent)}
           </span>
@@ -601,7 +603,7 @@ function SimpleBalanceCard({
         <span className="relative flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-[13px] font-medium text-ink-secondary">
             <IconLock className="size-4" />
-            Ušteđevina · zaključano
+            {text("finance.lockedSavings")}
           </span>
           <span className="font-display text-[20px] font-semibold tabular-nums text-ink-secondary">
             {formatRsd(summary.lockedSavings)}
@@ -637,8 +639,7 @@ function HistoryList({
       {banners}
       {months.length === 0 ? (
         <p className="px-2 py-16 text-center text-[15px] text-ink-secondary">
-          Još nema sačuvanih meseci. Unesi prvu platu pa će se ovde pojaviti
-          istorija.
+          {text("finance.noMonths")}
         </p>
       ) : (
         <div className="flex flex-col gap-2 lg:grid lg:grid-cols-2 lg:gap-3">
@@ -659,9 +660,9 @@ function HistoryList({
                       {monthTitleFromKey(month)}
                     </p>
                     <p className="mt-0.5 text-[13px] text-ink-secondary">
-                      Plata {formatRsd(summary.salary)}
+                      {text("finance.salaryLine", { amount: formatRsd(summary.salary) })}
                       {!splitEnabled && summary.lockedSavings > 0
-                        ? ` · ušteđevina ${formatRsd(summary.lockedSavings)}`
+                        ? text("finance.savingsBit", { amount: formatRsd(summary.lockedSavings) })
                         : ""}
                     </p>
                   </div>
@@ -679,7 +680,7 @@ function HistoryList({
                   onClick={() => setPendingMonth(month)}
                   className="pressable shrink-0 whitespace-nowrap text-[13px] text-danger"
                 >
-                  Obriši mesec
+                  {text("finance.deleteMonth")}
                 </button>
               </div>
             );
@@ -688,9 +689,11 @@ function HistoryList({
       )}
       <FinanceConfirm
         open={pendingMonth !== null}
-        title="Obrisati mesec?"
-        body={`Plata, troškovi, ušteđevina i bonus uplate za ${pendingMonth ? monthTitleFromKey(pendingMonth) : "ovaj mesec"} biće uklonjeni.`}
-        confirmLabel="Obriši"
+        title={text("finance.deleteMonthTitle")}
+        body={text("finance.deleteMonthBody", {
+          month: pendingMonth ? monthTitleFromKey(pendingMonth) : text("finance.thisMonth"),
+        })}
+        confirmLabel={text("common.delete")}
         danger
         onCancel={() => setPendingMonth(null)}
         onConfirm={() => {
@@ -703,14 +706,14 @@ function HistoryList({
         onClick={onSalary}
         className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-accent text-[16px] font-semibold text-accent-fg lg:min-w-[240px] lg:self-start lg:px-8"
       >
-        Unesi platu
+        {text("finance.salaryTitle")}
       </button>
       <button
         type="button"
         onClick={onReset}
         className="pressable flex min-h-11 items-center justify-center rounded-2xl text-[13px] font-medium text-danger lg:self-start"
       >
-        Resetuj sve podatke
+        {text("finance.resetAll")}
       </button>
     </div>
   );
@@ -735,7 +738,7 @@ function BalanceCard({ summary }: { summary: MonthSummary }) {
   return (
     <div className="card rounded-[28px] px-5 py-6">
       <p className="text-[13px] font-medium text-ink-secondary">
-        Ostalo od plate
+        {text("finance.leftOfSalary")}
       </p>
       <p
         className={cn(
@@ -746,23 +749,23 @@ function BalanceCard({ summary }: { summary: MonthSummary }) {
         {formatRsd(summary.leftoverSalary)}
       </p>
       <div className="mt-4 space-y-1.5 text-[15px]">
-        <BalanceRow label="Ukupna plata" value={formatRsd(summary.salary)} />
+        <BalanceRow label={text("finance.totalSalary")} value={formatRsd(summary.salary)} />
         <BalanceRow
-          label="Bonus uplate"
+          label={text("finance.bonusPayments")}
           value={formatRsd(summary.totalBonus)}
         />
         <BalanceRow
-          label="Ukupno sa bonus"
+          label={text("finance.withBonus")}
           value={formatRsd(summary.totalWithBonus)}
         />
         <BalanceRow
-          label="Troškovi"
+          label={text("finance.expenses")}
           value={`−${formatRsd(summary.totalSpent)}`}
         />
       </div>
       <div className="mt-5 pt-5 hairline-t">
         <p className="text-[13px] font-medium text-ink-secondary">
-          Bez ušteđevine ostalo
+          {text("finance.leftWithoutSavings")}
         </p>
         <p
           className={cn(
@@ -787,7 +790,7 @@ function SplitGraphic({
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
       <p className="mb-2 px-1 text-[13px] font-medium text-ink-secondary">
-        Budžet 50 / 30 / 20
+        {text("finance.budget")}
       </p>
       <div className="flex h-[108px] min-w-0 overflow-hidden rounded-[22px] bg-surface-2 lg:h-full lg:min-h-[280px]">
         {BUCKETS.map((bucket, index) => {
@@ -804,7 +807,7 @@ function SplitGraphic({
               key={bucket.id}
               type="button"
               onClick={() => onOpen(bucket.id)}
-              aria-label={`${bucket.label}, ostalo ${formatRsd(remaining)}`}
+              aria-label={text("finance.bucketAria", { label: bucket.label, amount: formatRsd(remaining) })}
               className={cn(
                 "relative flex min-w-0 flex-col items-center justify-center gap-1 overflow-hidden px-1.5",
                 bucket.id === "needs" && "flex-[5] bg-accent/14",
@@ -893,7 +896,7 @@ function BucketDetail({
             <div className="relative">
               <p className="flex items-center gap-2 text-[13px] font-medium text-ink-secondary">
                 {locked && <IconLock className="size-4" />}
-                {locked ? "Zaključano — ne troši se" : "Ostalo"}
+                {locked ? text("finance.lockedNote") : text("finance.left")}
               </p>
               <p
                 className={cn(
@@ -943,7 +946,7 @@ function BucketDetail({
                   return (
                     <div key={cat.id}>
                       <div className="mb-1 flex items-baseline justify-between gap-2 text-[13px]">
-                        <span>{cat.label}</span>
+                        <span>{displayCategoryLabel(cat)}</span>
                         <span className="tabular-nums text-ink-secondary">
                           {formatRsd(value)}
                         </span>
@@ -969,7 +972,7 @@ function BucketDetail({
               onClick={() => onAddExpense(bucket)}
               className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-accent text-[16px] font-semibold text-accent-fg"
             >
-              Unesi trošak
+              {text("finance.expense")}
             </button>
           )}
           <button
@@ -977,7 +980,7 @@ function BucketDetail({
             onClick={onAddBonus}
             className="pressable flex min-h-12 items-center justify-center rounded-2xl bg-surface text-[15px] font-semibold shadow-[var(--shadow-card)]"
           >
-            Uplata van plate
+            {text("finance.bonusTitle")}
           </button>
         </div>
 
@@ -985,8 +988,8 @@ function BucketDetail({
           {expenses.length === 0 && bonuses.length === 0 ? (
             <p className="px-2 py-6 text-center text-[14px] text-ink-secondary lg:py-16">
               {locked
-                ? "Ušteđevina je zaključana. Bonus uplate ovde ostaju sačuvane."
-                : "Nema prometa u ovoj grupi."}
+                ? text("finance.savingsLockedNote")
+                : text("finance.noActivity")}
             </p>
           ) : (
             <div className="flex flex-col gap-4">
@@ -1006,7 +1009,7 @@ function BucketDetail({
                       className="card flex items-center gap-3 rounded-[20px] px-4 py-3"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-[15px] font-medium">Bonus uplata</p>
+                        <p className="text-[15px] font-medium">{text("finance.bonusEntry")}</p>
                         <p className="text-[12px] text-ink-secondary">
                           {formatExpenseDate(entry.date)}
                         </p>
@@ -1021,7 +1024,7 @@ function BucketDetail({
                         }
                         className="pressable text-[13px] text-danger"
                       >
-                        Obriši
+                        {text("common.delete")}
                       </button>
                     </div>
                   ))}
@@ -1034,9 +1037,9 @@ function BucketDetail({
 
       <FinanceConfirm
         open={pending !== null}
-        title={pending?.kind === "bonus" ? "Obrisati uplatu?" : "Obrisati trošak?"}
-        body="Stavka će biti uklonjena iz ovog meseca."
-        confirmLabel="Obriši"
+        title={pending?.kind === "bonus" ? text("finance.deletePaymentTitle") : text("finance.deleteExpenseTitle")}
+        body={text("finance.removeBody")}
+        confirmLabel={text("common.delete")}
         danger
         onCancel={() => setPending(null)}
         onConfirm={() => {
@@ -1082,7 +1085,7 @@ function GroupedExpenseList({
                 <ExpenseRow
                   key={entry.id}
                   expense={entry}
-                  label={categoryMeta(entry.category, categories).label}
+                  label={displayCategoryLabel(categoryMeta(entry.category, categories))}
                   onOpen={() => onEditExpense(entry.id)}
                   onDelete={() => onDeleteExpense(entry.id)}
                 />
@@ -1119,7 +1122,7 @@ function ExpenseRow({
         onClick={onDelete}
         className="pressable text-[13px] text-danger"
       >
-        Obriši
+        {text("common.delete")}
       </button>
     </div>
   );

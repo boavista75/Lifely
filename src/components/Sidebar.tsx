@@ -1,7 +1,8 @@
 import { BrandLockup } from "@/components/ThemeToggle";
+import { text } from "@/i18n";
 import { KbExplorer } from "@/components/KbExplorer";
-import { IconApp, IconYoutube } from "@/components/icons";
-import { TABS } from "@/nav";
+import { IconApp } from "@/components/icons";
+import { tabLabel, TABS } from "@/nav";
 import { cn } from "@/lib/cn";
 import { snappySpring } from "@/lib/motion";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
@@ -9,7 +10,6 @@ import { useUiStore } from "@/store/useUiStore";
 import { motion, useReducedMotion } from "motion/react";
 
 const CINOMNIA_URL = "http://127.0.0.1/cinomnia/index.php";
-const YOUTUBE_URL = "https://www.youtube.com/@boavista75";
 
 export function Sidebar() {
   const tab = useUiStore((state) => state.tab);
@@ -29,10 +29,10 @@ export function Sidebar() {
         <BrandLockup />
       </div>
       <nav
-        aria-label="Glavna navigacija"
+        aria-label={text("nav.main")}
         className="mt-8 flex shrink-0 flex-col gap-1"
       >
-        {TABS.map(({ id, label, Icon }) => {
+        {TABS.map(({ id, Icon }) => {
           const active = tab === id;
           return (
             <button
@@ -55,7 +55,7 @@ export function Sidebar() {
                 />
               )}
               <Icon className="relative size-[22px] shrink-0" />
-              <span className="relative min-w-0 truncate">{label}</span>
+              <span className="relative min-w-0 truncate">{text(tabLabel(id))}</span>
             </button>
           );
         })}
@@ -66,11 +66,11 @@ export function Sidebar() {
       >
         <span className="h-px min-w-3 flex-1 bg-hairline" />
         <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
-          apps
+          {text("nav.appsLabel")}
         </span>
         <span className="h-px min-w-3 flex-1 bg-hairline" />
       </div>
-      <nav aria-label="Aplikacije" className="flex shrink-0 flex-col gap-1">
+      <nav aria-label={text("nav.apps")} className="flex shrink-0 flex-col gap-1">
         <a
           href={CINOMNIA_URL}
           target="_blank"
@@ -79,15 +79,6 @@ export function Sidebar() {
         >
           <IconApp className="relative size-[22px] shrink-0" />
           <span className="relative min-w-0 truncate">Cinomnia</span>
-        </a>
-        <a
-          href={YOUTUBE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative flex min-h-11 min-w-0 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium text-ink-secondary transition-colors duration-200 hover:text-ink"
-        >
-          <IconYoutube className="relative size-[22px] shrink-0" />
-          <span className="relative min-w-0 truncate">YouTube</span>
         </a>
       </nav>
       {showKbTree ? <KbExplorer variant="sidebar" /> : null}

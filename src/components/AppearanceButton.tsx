@@ -1,4 +1,5 @@
 import { IconCheck } from "@/components/icons";
+import { text, type MessageKey } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { PALETTES, type Palette } from "@/lib/palettes";
 import { useThemeStore } from "@/store/useThemeStore";
@@ -13,6 +14,18 @@ import { createPortal } from "react-dom";
 
 const PANEL_W = 280;
 
+const PALETTE_LABELS: Record<Palette["id"], MessageKey> = {
+  grove: "palette.grove",
+  harbor: "palette.harbor",
+  moss: "palette.moss",
+  dusk: "palette.dusk",
+  clay: "palette.clay",
+};
+
+function paletteLabel(id: Palette["id"]): MessageKey {
+  return PALETTE_LABELS[id];
+}
+
 export function AppearanceButton() {
   const paletteId = useThemeStore((state) => state.palette);
   const setPalette = useThemeStore((state) => state.setPalette);
@@ -25,7 +38,7 @@ export function AppearanceButton() {
       <button
         ref={buttonRef}
         type="button"
-        aria-label="Izgled"
+        aria-label={text("appearance.label")}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -119,14 +132,14 @@ function AppearancePanel({
     <div
       ref={panelRef}
       role="dialog"
-      aria-label="Izgled"
+      aria-label={text("appearance.label")}
       className="glass fixed z-[55] max-h-[min(92dvh,560px)] overflow-y-auto rounded-[22px] p-3 shadow-[var(--shadow-float)]"
       style={{ top: pos.top, left: pos.left, width: PANEL_W }}
     >
       <p className="px-1 pb-2 text-[13px] font-medium text-ink-secondary">
-        Paleta boja
+        {text("appearance.palette")}
       </p>
-      <div role="radiogroup" aria-label="Paleta boja" className="flex flex-col gap-1">
+      <div role="radiogroup" aria-label={text("appearance.palette")} className="flex flex-col gap-1">
         {PALETTES.map((palette) => {
           const selected = palette.id === selectedId;
           return (
@@ -150,7 +163,7 @@ function AppearancePanel({
               />
               <span className="mt-2 flex min-h-6 items-center justify-between gap-2 px-0.5">
                 <span className="text-[14px] font-medium text-ink">
-                  {palette.name}
+                  {text(paletteLabel(palette.id))}
                 </span>
                 <span className="flex items-center gap-2">
                   <span className="flex gap-1" aria-hidden>

@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+server/node_modules
+server/dist
+.data
+lifely.sql
+media-backup
+media-*
 
 # Editor directories and files
 .vscode/*

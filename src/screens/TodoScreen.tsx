@@ -1,4 +1,5 @@
 import { CalendarFilters } from "@/components/CalendarFilters";
+import { text } from "@/i18n";
 import { ItemRow } from "@/components/ItemRow";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { todayKey, parseDateKey, shortMonthDay } from "@/lib/dates";
@@ -41,12 +42,12 @@ export function TodoScreen() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ScreenHeader title="Todo" actions={<CalendarFilters />} />
+      <ScreenHeader title={text("nav.todo")} actions={<CalendarFilters />} />
       <form onSubmit={onQuickAdd} className="shrink-0 px-5 pt-5 md:px-8">
         <input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="Dodaj za danas"
+          placeholder={text("todo.placeholder")}
           className="field md:max-w-xl"
         />
       </form>
@@ -54,15 +55,15 @@ export function TodoScreen() {
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-8 md:px-6">
         {groups.empty ? (
           <p className="px-3 py-20 text-center text-[15px] text-ink-secondary">
-            Nema stavki. Dodaj prvu iznad.
+            {text("todo.empty")}
           </p>
         ) : (
           <>
             {groups.overdue.length > 0 && (
-              <Section title="Ranije" items={groups.overdue} onOpen={openEditItem} showDate />
+              <Section title={text("todo.earlier")} items={groups.overdue} onOpen={openEditItem} showDate />
             )}
             {groups.today.length > 0 && (
-              <Section title="Danas" items={groups.today} onOpen={openEditItem} />
+              <Section title={text("todo.today")} items={groups.today} onOpen={openEditItem} />
             )}
             {groups.upcoming.length > 0 && (
               <Upcoming
@@ -72,7 +73,7 @@ export function TodoScreen() {
             )}
             {groups.completed.length > 0 && (
               <Section
-                title="Završeno"
+                title={text("todo.done")}
                 items={groups.completed}
                 onOpen={openEditItem}
                 showDate
@@ -134,7 +135,7 @@ function Upcoming({
   return (
     <section className="mt-5">
       <h2 className="px-3 pb-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
-        Predstojeće
+        {text("todo.upcoming")}
       </h2>
       {[...byDate.entries()].map(([date, list]) => (
         <div key={date} className="mb-3">

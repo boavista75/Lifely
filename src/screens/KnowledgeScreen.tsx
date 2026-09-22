@@ -1,4 +1,5 @@
 import { KbDownloadButton } from "@/components/KbDownloadButton";
+import { text, useLocaleStore } from "@/i18n";
 import { KbFileViewer } from "@/components/KbFileViewer";
 import { KbExplorer } from "@/components/KbExplorer";
 import { KbMediaControl } from "@/components/KbMediaControl";
@@ -144,6 +145,11 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
     [nodeId],
   );
   editorRef.current = editor;
+  const locale = useLocaleStore((state) => state.locale);
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.view.dispatch(editor.state.tr);
+  }, [locale, editor]);
 
   function goFind(direction: 1 | -1) {
     if (!editor || editor.isDestroyed) return;
@@ -234,7 +240,7 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
       updateNode(page.id, {
         title: isKbPage(page)
           ? defaultPageTitle(new Date(page.createdAt))
-          : page.title || "Fajl",
+          : text("common.file"),
       });
     }
     closeKbPage();
@@ -249,7 +255,7 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
           className="pressable inline-flex min-h-11 items-center gap-0.5 rounded-full px-2 text-[16px] text-accent"
         >
           <IconChevron className="size-5" />
-          Knowledge
+          {text("nav.knowledge")}
         </button>
         <div className="flex shrink-0 items-center">
           <KbDownloadButton
@@ -269,7 +275,7 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
             }
             className="pressable min-h-11 rounded-full px-3 text-[16px] text-danger"
           >
-            Obriši
+            {text("common.delete")}
           </button>
         </div>
       </header>
@@ -281,11 +287,11 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
             updateNode(page.id, {
               title: isKbPage(page)
                 ? defaultPageTitle(new Date(page.createdAt))
-                : "Fajl",
+                : text("common.file"),
             });
           }
         }}
-        placeholder="Naslov"
+        placeholder={text("common.title")}
         className="w-full shrink-0 bg-transparent px-5 py-2 font-display text-[32px] font-semibold leading-tight tracking-[-0.03em] outline-none placeholder:text-ink-tertiary md:px-8"
       />
       {editor && (
@@ -293,16 +299,16 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
           editor={editor}
           extra={
             <>
-              <ToolGroup label="Veličina teksta">
+              <ToolGroup label={text("kb.textSize")}>
                 <KbTextScaleControl
                   scale={page.textScale ?? KB_TEXT_SCALE_DEFAULT}
                   onChange={(textScale) => updateNode(page.id, { textScale })}
                 />
               </ToolGroup>
-              <ToolGroup label="Mediji">
+              <ToolGroup label={text("kb.media")}>
                 <KbMediaControl editor={editor} />
               </ToolGroup>
-              <ToolGroup label="Linkovi">
+              <ToolGroup label={text("kb.links")}>
                 <KbPageLinkControl editor={editor} currentPageId={page.id} />
               </ToolGroup>
             </>
@@ -322,8 +328,8 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
                   goFind(event.shiftKey ? -1 : 1);
                 }
               }}
-              placeholder="Pronađi u tekstu"
-              aria-label="Pronađi u tekstu"
+              placeholder={text("kb.findInText")}
+              aria-label={text("kb.findInText")}
               className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-ink-tertiary"
             />
             {findQuery.trim() ? (
@@ -331,23 +337,28 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
                 aria-live="polite"
                 aria-label={
                   findResult.total === 0
-                    ? "Nema podudaranja"
+                    ? text("kb.noMatches")
                     : findResult.index > 0
-                      ? `${findResult.index} od ${findResult.total} podudaranja`
-                      : `${findResult.total} podudaranja`
+                      ? text("kb.matchCount", {
+                          count: text("kb.matchOf", {
+                            index: findResult.index,
+                            total: findResult.total,
+                          }),
+                        })
+                      : text("kb.matchCount", { count: findResult.total })
                 }
                 className="shrink-0 tabular-nums text-[13px] text-ink-tertiary"
               >
                 {findResult.total === 0
                   ? "0"
                   : findResult.index > 0
-                    ? `${findResult.index} od ${findResult.total}`
+                    ? text("kb.matchOf", { index: findResult.index, total: findResult.total })
                     : String(findResult.total)}
               </span>
             ) : null}
             <button
               type="button"
-              aria-label="Prethodno"
+              aria-label={text("kb.previous")}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => goFind(-1)}
               className="grid size-8 place-items-center text-ink-secondary"
@@ -356,7 +367,7 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
             </button>
             <button
               type="button"
-              aria-label="Sledeće"
+              aria-label={text("kb.next")}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => goFind(1)}
               className="grid size-8 place-items-center text-ink-secondary"

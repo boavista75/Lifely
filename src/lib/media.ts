@@ -1,3 +1,5 @@
+import { text } from "@/i18n";
+
 export const MEDIA_ERROR_EVENT = "lifely-media-error";
 
 export const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
@@ -9,6 +11,18 @@ const VERSION = 1;
 
 export type MediaAlign = "left" | "center" | "right";
 export type MediaKind = "image" | "video";
+
+type RemoteMedia = {
+  save: (id: string, blob: Blob) => Promise<void>;
+  load: (id: string) => Promise<Blob | null>;
+  remove: (id: string) => Promise<void>;
+};
+
+let remoteMedia: RemoteMedia | null = null;
+
+export function setRemoteMedia(next: RemoteMedia | null): void {
+  remoteMedia = next;
+}
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -38,13 +52,8 @@ export function mediaKind(file: File): MediaKind | null {
 
 export async function saveMedia(blob: Blob): Promise<string> {
   const id = crypto.randomUUID();
-  const db = await openDb();
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-    tx.objectStore(STORE).put(blob, id);
-  });
+  if (remoteMedia) await remoteMedia.save(id, blob);
+  await putBlob(id, blob);
   return id;
 }
 
@@ -52,6 +61,9 @@ export async function saveMediaMany(
   entries: { id: string; blob: Blob }[],
 ): Promise<void> {
   if (entries.length === 0) return;
+  if (remoteMedia) {
+    for (const entry of entries) await remoteMedia.save(entry.id, entry.blob);
+  }
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
@@ -63,13 +75,18 @@ export async function saveMediaMany(
 }
 
 export async function loadMedia(id: string): Promise<Blob | null> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readonly");
-    const request = tx.objectStore(STORE).get(id);
-    request.onsuccess = () => resolve((request.result as Blob | undefined) ?? null);
-    request.onerror = () => reject(request.error);
-  });
+  const local = await readBlob(id);
+  if (local) return local;
+  if (!remoteMedia) return null;
+  try {
+    const blob = await remoteMedia.load(id);
+    if (!blob) return null;
+    await putBlob(id, blob);
+    return blob;
+  } catch {
+    reportMediaError(text("kb.fileNotLoaded"));
+    return null;
+  }
 }
 
 export async function loadMediaMany(
@@ -98,6 +115,9 @@ export async function loadMediaMany(
 export async function deleteMedia(ids: string[]): Promise<void> {
   const unique = [...new Set(ids.filter(Boolean))];
   if (unique.length === 0) return;
+  if (remoteMedia) {
+    for (const id of unique) await remoteMedia.remove(id);
+  }
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
@@ -105,6 +125,47 @@ export async function deleteMedia(ids: string[]): Promise<void> {
     tx.onerror = () => reject(tx.error);
     const store = tx.objectStore(STORE);
     for (const id of unique) store.delete(id);
+  });
+}
+
+export async function listLocalMedia(): Promise<{ id: string; blob: Blob }[]> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const entries: { id: string; blob: Blob }[] = [];
+    const tx = db.transaction(STORE, "readonly");
+    const request = tx.objectStore(STORE).openCursor();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (!cursor) {
+        resolve(entries);
+        return;
+      }
+      if (typeof cursor.key === "string" && cursor.value instanceof Blob) {
+        entries.push({ id: cursor.key, blob: cursor.value });
+      }
+      cursor.continue();
+    };
+  });
+}
+
+async function putBlob(id: string, blob: Blob): Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(STORE).put(blob, id);
+  });
+}
+
+async function readBlob(id: string): Promise<Blob | null> {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readonly");
+    const request = tx.objectStore(STORE).get(id);
+    request.onsuccess = () => resolve((request.result as Blob | undefined) ?? null);
+    request.onerror = () => reject(request.error);
   });
 }
 
@@ -160,7 +221,7 @@ function blobToImage(blob: Blob): Promise<HTMLImageElement> {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Slika se nije učitala"));
+      reject(new Error(text("media.notLoaded")));
     };
     image.src = url;
   });

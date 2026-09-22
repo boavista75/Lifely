@@ -1,3 +1,4 @@
+import { text } from "@/i18n";
 import { cn } from "@/lib/cn";
 import {
   clampSidebarWidth,
@@ -133,12 +134,12 @@ export function useSidebarResize() {
       ref: handleRef,
       role: "separator" as const,
       "aria-orientation": "vertical" as const,
-      "aria-label": "Širina panela",
+      "aria-label": text("sidebar.width"),
       "aria-valuemin": SIDEBAR_WIDTH_MIN,
       "aria-valuemax": sidebarWidthMax(),
       "aria-valuenow": width,
       tabIndex: 0,
-      title: "Prevuci da promeniš širinu. Dvoklik vraća podrazumevanu.",
+      title: text("sidebar.widthHint"),
       className: cn(
         "group absolute inset-y-0 right-0 z-20 flex w-3 cursor-col-resize touch-none items-stretch justify-center",
         "outline-none focus-visible:shadow-[inset_-2px_0_0_0_var(--accent)]",

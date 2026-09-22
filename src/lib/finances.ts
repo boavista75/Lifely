@@ -6,6 +6,8 @@ import {
   parseDateKey,
   todayKey,
 } from "@/lib/dates";
+import { text } from "@/i18n";
+import { getLocale } from "@/i18n/locale";
 import type {
   ExpenseCategory,
   ExpenseCategoryDef,
@@ -84,12 +86,16 @@ const BUCKET_BY_ID = Object.fromEntries(
   BUCKETS.map((entry) => [entry.id, entry]),
 ) as Record<FinanceBucket, (typeof BUCKETS)[number]>;
 
-const rsdFormat = new Intl.NumberFormat("sr-RS", {
-  maximumFractionDigits: 0,
-});
-
 export function bucketMeta(id: FinanceBucket) {
-  return BUCKET_BY_ID[id];
+  const base = BUCKET_BY_ID[id];
+  if (id === "needs") return { ...base, subtitle: text("finance.needsSubtitle") };
+  if (id === "wants") return { ...base, subtitle: text("finance.wantsSubtitle") };
+  return {
+    ...base,
+    label: text("finance.savings"),
+    shortLabel: text("finance.savings"),
+    subtitle: text("finance.lockedNote"),
+  };
 }
 
 export function resolveCategories(
@@ -103,6 +109,25 @@ function categoryById(
   categories: readonly ExpenseCategoryDef[],
 ): Record<string, ExpenseCategoryDef> {
   return Object.fromEntries(categories.map((entry) => [entry.id, entry]));
+}
+
+const BUILTIN_CATEGORY_LABELS: Record<string, { sr: string; en: string }> = {
+  stanarina: { sr: "Stanarina", en: "Rent" },
+  gorivo: { sr: "Gorivo", en: "Fuel" },
+  racuni: { sr: "Računi", en: "Bills" },
+  nabavka: { sr: "Nabavka", en: "Groceries" },
+  kafic: { sr: "Kafić", en: "Café" },
+  "brza-hrana": { sr: "Brza hrana", en: "Fast food" },
+  bioskop: { sr: "Bioskop", en: "Cinema" },
+  subskripcije: { sr: "Subskripcije", en: "Subscriptions" },
+  soping: { sr: "Šoping", en: "Shopping" },
+};
+
+export function displayCategoryLabel(category: { id: string; label: string }): string {
+  const known = BUILTIN_CATEGORY_LABELS[category.id];
+  if (!known) return category.label;
+  if (category.label !== known.sr && category.label !== known.en) return category.label;
+  return getLocale() === "en" ? known.en : known.sr;
 }
 
 export function categoryMeta(
@@ -189,7 +214,8 @@ export function monthTitleFromKey(key: string): string {
 }
 
 export function formatRsdNumber(amount: number): string {
-  return rsdFormat.format(Math.round(amount));
+  const locale = getLocale() === "en" ? "en-US" : "sr-RS";
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(amount));
 }
 
 export function formatRsd(amount: number): string {
@@ -389,7 +415,7 @@ export function monthKeyInCurrentYear(month: string, now = new Date()): string {
 
 export function formatExpenseDate(dateKey: string): string {
   const date = parseDateKey(dateKey);
-  return date.toLocaleDateString("sr-Latn-RS", {
+  return date.toLocaleDateString(getLocale() === "en" ? "en-US" : "sr-Latn-RS", {
     day: "numeric",
     month: "short",
   });
@@ -398,8 +424,8 @@ export function formatExpenseDate(dateKey: string): string {
 export function expenseDateHeading(dateKey: string): string {
   const today = todayKey();
   const formatted = formatExpenseDate(dateKey);
-  if (dateKey === today) return `Danas, ${formatted}`;
-  if (nextDateKey(dateKey) === today) return `Juče, ${formatted}`;
+  if (dateKey === today) return `${text("common.today")}, ${formatted}`;
+  if (nextDateKey(dateKey) === today) return `${text("common.yesterday")}, ${formatted}`;
   return formatted;
 }
 
