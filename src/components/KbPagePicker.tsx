@@ -1,6 +1,11 @@
 import { IconClose, IconFolder, IconKnowledge } from "@/components/icons";
 import { cn } from "@/lib/cn";
-import { displayKbTitle, kbFolderPathLabel, reachableKbIds } from "@/lib/kb";
+import {
+  displayKbTitle,
+  kbFolderPathLabel,
+  reachableKbIds,
+  sportKbIds,
+} from "@/lib/kb";
 import { useKbStore } from "@/store/useKbStore";
 import type { LifelyKbFile, LifelyKbNode, LifelyKbPage } from "@/types";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -56,9 +61,11 @@ function positionPanel(trigger: HTMLElement): PanelPos {
 export function KbPagePicker({ value, onChange }: Props) {
   const nodes = useKbStore((state) => state.nodes);
   const live = useMemo(() => reachableKbIds(nodes), [nodes]);
+  const hidden = useMemo(() => sportKbIds(nodes), [nodes]);
   const groups = useMemo(() => {
     const docs = nodes.filter(
-      (node): node is PickerDoc => isPickerDoc(node) && live.has(node.id),
+      (node): node is PickerDoc =>
+        isPickerDoc(node) && live.has(node.id) && !hidden.has(node.id),
     );
     const byPath = new Map<string, PickerDoc[]>();
     for (const doc of docs) {
@@ -81,7 +88,7 @@ export function KbPagePicker({ value, onChange }: Props) {
       if (!b) return 1;
       return a.localeCompare(b, "sr-Latn");
     });
-  }, [live, nodes]);
+  }, [hidden, live, nodes]);
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<PanelPos | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);

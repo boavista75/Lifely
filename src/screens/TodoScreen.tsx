@@ -1,7 +1,8 @@
+import { CalendarFilters } from "@/components/CalendarFilters";
 import { ItemRow } from "@/components/ItemRow";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { todayKey, parseDateKey, shortMonthDay } from "@/lib/dates";
-import { compareDayItems } from "@/lib/items";
+import { compareDayItems, filterCalendarItems } from "@/lib/items";
 import { useItemsStore } from "@/store/useItemsStore";
 import { useUiStore } from "@/store/useUiStore";
 import type { LifelyItem } from "@/types";
@@ -12,11 +13,15 @@ export function TodoScreen() {
   const items = useItemsStore((state) => state.items);
   const addItem = useItemsStore((state) => state.addItem);
   const openEditItem = useUiStore((state) => state.openEditItem);
+  const showSport = useUiStore((state) => state.showSport);
   const [draft, setDraft] = useState("");
   const addingRef = useRef(false);
   const today = todayKey();
 
-  const groups = useMemo(() => groupTodos(items, today), [items, today]);
+  const groups = useMemo(
+    () => groupTodos(filterCalendarItems(items, showSport), today),
+    [items, showSport, today],
+  );
 
   function onQuickAdd(event: FormEvent) {
     event.preventDefault();
@@ -36,7 +41,7 @@ export function TodoScreen() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <ScreenHeader title="Todo" />
+      <ScreenHeader title="Todo" actions={<CalendarFilters />} />
       <form onSubmit={onQuickAdd} className="shrink-0 px-5 pt-5 md:px-8">
         <input
           value={draft}

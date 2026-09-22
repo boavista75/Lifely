@@ -141,6 +141,17 @@ export function descendantIds(
   return ids;
 }
 
+const SPORT_KB_ROOT_IDS = ["kb-ski-2627", "kb-fs-2627"] as const;
+
+export function sportKbIds(nodes: LifelyKbNode[]): Set<string> {
+  const ids = new Set<string>();
+  for (const rootId of SPORT_KB_ROOT_IDS) {
+    if (!nodes.some((node) => node.id === rootId)) continue;
+    for (const id of descendantIds(nodes, rootId)) ids.add(id);
+  }
+  return ids;
+}
+
 export function reachableKbIds(nodes: LifelyKbNode[]): Set<string> {
   const ids = new Set<string>();
   const stack: Array<string | null> = [null];

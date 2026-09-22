@@ -380,8 +380,10 @@ function KbPageEditor({ nodeId }: { nodeId: string }) {
           } as CSSProperties
         }
       >
-        <EditorContent editor={editor} className="h-full min-h-[50%]" />
-        <LinkedTodos pageId={page.id} />
+        <div className="flex min-h-full flex-col">
+          <EditorContent editor={editor} className="grow" />
+          <LinkedTodos pageId={page.id} />
+        </div>
       </div>
     </div>
   );
@@ -394,7 +396,7 @@ function LinkedTodos({ pageId }: { pageId: string }) {
   if (linked.length === 0) return null;
 
   return (
-    <section className="mt-8 pb-8">
+    <section className="mt-8 shrink-0 pb-8">
       <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
         Povezane stavke
       </h2>

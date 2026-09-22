@@ -8,6 +8,7 @@ import {
   isDayLogged,
   normalizeCategoryLabel,
   salaryForMonth,
+  savingForMonth,
 } from "@/lib/finances";
 import { loadFinances, saveFinances } from "@/lib/storage";
 import type {
@@ -19,12 +20,16 @@ import type {
   FinanceData,
   FinanceExpense,
   FinanceSalary,
+  FinanceSaving,
 } from "@/types";
 import { create } from "zustand";
 
 type FinancesState = FinanceData & {
   hydrate: () => void;
+  setSplitEnabled: (enabled: boolean) => void;
   setSalary: (month: string, amount: number) => { overwritten: boolean };
+  setSaving: (month: string, amount: number) => void;
+  deleteSaving: (month: string) => void;
   addExpense: (draft: {
     category: ExpenseCategory;
     amount: number;
@@ -51,6 +56,7 @@ type FinancesState = FinanceData & {
   dismissExpenseReminder: (date: string) => void;
   markSalaryNotified: (month: string) => void;
   markExpenseNotified: (date: string) => void;
+  deleteMonth: (month: string) => void;
   resetAll: () => void;
 };
 
@@ -59,7 +65,9 @@ function persist(data: FinanceData): FinanceData {
     salaries: data.salaries,
     expenses: data.expenses,
     bonuses: data.bonuses,
+    savings: data.savings,
     categories: data.categories,
+    splitEnabled: data.splitEnabled,
     confirmedLogDates: data.confirmedLogDates,
     dismissedSalaryMonth: data.dismissedSalaryMonth,
     dismissedExpenseDate: data.dismissedExpenseDate,
@@ -78,6 +86,10 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
   ...EMPTY_FINANCE_DATA,
 
   hydrate: () => set({ ...loadFinances() }),
+
+  setSplitEnabled: (enabled) => {
+    set(persist({ ...get(), splitEnabled: enabled }));
+  },
 
   setSalary: (month, amount) => {
     const state = get();
@@ -98,6 +110,9 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
     const expenses = existing
       ? state.expenses.filter((entry) => !inMonth(entry.date, month))
       : state.expenses;
+    const savings = existing
+      ? state.savings.filter((entry) => entry.month !== month)
+      : state.savings;
     const confirmedLogDates = existing
       ? state.confirmedLogDates.filter((date) => !inMonth(date, month))
       : state.confirmedLogDates;
@@ -118,6 +133,7 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
         ...state,
         salaries,
         expenses,
+        savings,
         confirmedLogDates,
         dismissedExpenseDate,
         expenseNotifiedDate,
@@ -126,6 +142,46 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
       }),
     );
     return { overwritten: Boolean(existing) };
+  },
+
+  setSaving: (month, amount) => {
+    const state = get();
+    const existing = savingForMonth(state, month);
+    const now = nowIso();
+    if (amount <= 0) {
+      if (!existing) return;
+      set(
+        persist({
+          ...state,
+          savings: state.savings.filter((entry) => entry.month !== month),
+        }),
+      );
+      return;
+    }
+    const next: FinanceSaving = existing
+      ? { ...existing, amount, updatedAt: now }
+      : {
+          id: crypto.randomUUID(),
+          month,
+          amount,
+          createdAt: now,
+          updatedAt: now,
+        };
+    const savings = existing
+      ? state.savings.map((entry) => (entry.month === month ? next : entry))
+      : [...state.savings, next];
+    set(persist({ ...state, savings }));
+  },
+
+  deleteSaving: (month) => {
+    const state = get();
+    if (!savingForMonth(state, month)) return;
+    set(
+      persist({
+        ...state,
+        savings: state.savings.filter((entry) => entry.month !== month),
+      }),
+    );
   },
 
   addExpense: (draft) => {
@@ -244,6 +300,37 @@ export const useFinancesStore = create<FinancesState>((set, get) => ({
 
   markExpenseNotified: (date) => {
     set(persist({ ...get(), expenseNotifiedDate: date }));
+  },
+
+  deleteMonth: (month) => {
+    const state = get();
+    set(
+      persist({
+        ...state,
+        salaries: state.salaries.filter((entry) => entry.month !== month),
+        expenses: state.expenses.filter((entry) => !inMonth(entry.date, month)),
+        bonuses: state.bonuses.filter((entry) => !inMonth(entry.date, month)),
+        savings: state.savings.filter((entry) => entry.month !== month),
+        confirmedLogDates: state.confirmedLogDates.filter(
+          (date) => !inMonth(date, month),
+        ),
+        dismissedSalaryMonth:
+          state.dismissedSalaryMonth === month
+            ? null
+            : state.dismissedSalaryMonth,
+        salaryNotifiedMonth:
+          state.salaryNotifiedMonth === month ? null : state.salaryNotifiedMonth,
+        dismissedExpenseDate:
+          state.dismissedExpenseDate &&
+          inMonth(state.dismissedExpenseDate, month)
+            ? null
+            : state.dismissedExpenseDate,
+        expenseNotifiedDate:
+          state.expenseNotifiedDate && inMonth(state.expenseNotifiedDate, month)
+            ? null
+            : state.expenseNotifiedDate,
+      }),
+    );
   },
 
   resetAll: () => {

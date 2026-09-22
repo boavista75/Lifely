@@ -156,13 +156,13 @@ function FiltersPanel({
           Filteri
         </p>
         <p className="mt-1 text-[13px] leading-snug text-ink-secondary">
-          Izaberi koje vrste stavki želiš da vidiš u kalendaru.
+          Izaberi koje vrste stavki želiš da vidiš.
         </p>
       </div>
       <SportCheck
         checked={showSport}
         onChange={setShowSport}
-        description="Prikaži NBA utakmice, skijaške trke i ostale sportske događaje. Isključi ako želiš da u kalendaru ostanu samo lične obaveze."
+        description="Prikaži NBA utakmice, skijaške trke i ostale sportske događaje. Isključi ako želiš da ostanu samo lične obaveze."
       />
     </div>,
     document.body,

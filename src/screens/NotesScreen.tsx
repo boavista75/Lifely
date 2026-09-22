@@ -265,8 +265,10 @@ function NoteEditor({
         />
       )}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 md:px-8">
-        <EditorContent editor={editor} className="h-full min-h-[50%]" />
-        <LinkedItems noteId={note.id} />
+        <div className="flex min-h-full flex-col">
+          <EditorContent editor={editor} className="grow" />
+          <LinkedItems noteId={note.id} />
+        </div>
       </div>
     </div>
   );
@@ -279,7 +281,7 @@ function LinkedItems({ noteId }: { noteId: string }) {
   if (linked.length === 0) return null;
 
   return (
-    <section className="mt-8 pb-8">
+    <section className="mt-8 shrink-0 pb-8">
       <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-secondary">
         Povezane stavke
       </h2>

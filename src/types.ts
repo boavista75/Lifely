@@ -114,11 +114,21 @@ export interface FinanceBonus {
   createdAt: string;
 }
 
+export interface FinanceSaving {
+  id: string;
+  month: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FinanceData {
   salaries: FinanceSalary[];
   expenses: FinanceExpense[];
   bonuses: FinanceBonus[];
+  savings: FinanceSaving[];
   categories: ExpenseCategoryDef[];
+  splitEnabled: boolean;
   confirmedLogDates: string[];
   dismissedSalaryMonth: string | null;
   dismissedExpenseDate: string | null;

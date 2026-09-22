@@ -8,6 +8,7 @@ import {
   CATEGORY_LABEL_MAX,
   categoriesForBucket,
   categoryMeta,
+  findCategoryByLabelAny,
   parseAmount,
 } from "@/lib/finances";
 import { useFinancesStore } from "@/store/useFinancesStore";
@@ -27,6 +28,7 @@ type Props = {
   bucket?: SpendBucket;
   existing?: FinanceExpense | null;
   defaultMonth?: string;
+  simple?: boolean;
 };
 
 const BUCKET_OPTIONS = BUCKETS.filter(
@@ -38,15 +40,26 @@ const BUCKET_OPTIONS = BUCKETS.filter(
   hint: entry.shortLabel,
 }));
 
-export function ExpenseSheet({ open, onClose, bucket, existing, defaultMonth }: Props) {
+export function ExpenseSheet({
+  open,
+  onClose,
+  bucket,
+  existing,
+  defaultMonth,
+  simple = false,
+}: Props) {
   return (
     <Sheet open={open} onClose={onClose} labelledBy="expense-sheet-title" zIndex={60}>
       {open && (
         <ExpenseForm
-          key={existing?.id ?? `${bucket ?? "expense"}-${defaultMonth ?? "today"}`}
-          bucket={bucket}
+          key={
+            existing?.id ??
+            `${simple ? "simple" : (bucket ?? "expense")}-${defaultMonth ?? "today"}`
+          }
+          bucket={simple ? undefined : bucket}
           existing={existing ?? null}
           defaultMonth={defaultMonth}
+          simple={simple}
           onClose={onClose}
         />
       )}
@@ -58,11 +71,13 @@ function ExpenseForm({
   bucket,
   existing,
   defaultMonth,
+  simple,
   onClose,
 }: {
   bucket?: SpendBucket;
   existing: FinanceExpense | null;
   defaultMonth?: string;
+  simple: boolean;
   onClose: () => void;
 }) {
   const categories = useFinancesStore((state) => state.categories);
@@ -72,13 +87,20 @@ function ExpenseForm({
   const addCategory = useFinancesStore((state) => state.addCategory);
   const deleteCategory = useFinancesStore((state) => state.deleteCategory);
   const [spendBucket, setSpendBucket] = useState<SpendBucket | null>(
-    existing
-      ? categoryMeta(existing.category, categories).bucket
-      : (bucket ?? null),
+    simple
+      ? null
+      : existing
+        ? categoryMeta(existing.category, categories).bucket
+        : (bucket ?? null),
   );
   const options = useMemo(
-    () => (spendBucket ? categoriesForBucket(spendBucket, categories) : []),
-    [spendBucket, categories],
+    () =>
+      simple
+        ? categories
+        : spendBucket
+          ? categoriesForBucket(spendBucket, categories)
+          : [],
+    [simple, spendBucket, categories],
   );
   const [category, setCategory] = useState<ExpenseCategory | null>(
     existing?.category ?? null,
@@ -124,10 +146,18 @@ function ExpenseForm({
   }
 
   function submitNewCategory() {
-    if (!spendBucket) return;
+    const existingByLabel = findCategoryByLabelAny(newCategoryLabel, categories);
+    if (existingByLabel && (simple || existingByLabel.bucket === spendBucket)) {
+      setCategory(existingByLabel.id);
+      setAddingCategory(false);
+      setNewCategoryLabel("");
+      setError(null);
+      return;
+    }
+    if (!simple && !spendBucket) return;
     const created = addCategory({
       label: newCategoryLabel,
-      bucket: spendBucket,
+      bucket: spendBucket ?? "needs",
     });
     if (!created) {
       setError("Unesite naziv kategorije");
@@ -150,7 +180,7 @@ function ExpenseForm({
   }
 
   function save() {
-    if (!spendBucket) {
+    if (!simple && !spendBucket) {
       setError("Izaberite grupu");
       return;
     }
@@ -214,7 +244,7 @@ function ExpenseForm({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 md:px-5">
-        {!bucketLocked && (
+        {!simple && !bucketLocked && (
           <div className="mb-4">
             <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
               Prvo izaberi grupu
@@ -252,7 +282,7 @@ function ExpenseForm({
           </div>
         )}
 
-        {spendBucket && (
+        {(simple || spendBucket) && (
           <div className="mb-4">
             <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
               Kategorija

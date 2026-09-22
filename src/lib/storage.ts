@@ -31,6 +31,7 @@ import type {
   FinanceData,
   FinanceExpense,
   FinanceSalary,
+  FinanceSaving,
   LifelyItem,
   LifelyKbNode,
   LifelyNote,
@@ -482,10 +483,21 @@ function isBonus(value: unknown): value is FinanceBonus {
   );
 }
 
-function uniqueByMonth(salaries: FinanceSalary[]): FinanceSalary[] {
-  const seen = new Map<string, FinanceSalary>();
-  for (const salary of salaries) seen.set(salary.month, salary);
+function uniqueByMonth<T extends { month: string }>(entries: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const entry of entries) seen.set(entry.month, entry);
   return [...seen.values()];
+}
+
+function isSaving(value: unknown): value is FinanceSaving {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    isMonthKey(value.month) &&
+    isPositiveAmount(value.amount) &&
+    typeof value.createdAt === "string" &&
+    typeof value.updatedAt === "string"
+  );
 }
 
 export function loadFinances(): FinanceData {
@@ -504,6 +516,9 @@ export function loadFinances(): FinanceData {
     const bonuses = Array.isArray(parsed.bonuses)
       ? parsed.bonuses.filter(isBonus)
       : [];
+    const savings = Array.isArray(parsed.savings)
+      ? uniqueByMonth(parsed.savings.filter(isSaving))
+      : [];
     const categories = parseCategories(parsed.categories);
     const confirmedLogDates = Array.isArray(parsed.confirmedLogDates)
       ? parsed.confirmedLogDates.filter(
@@ -514,7 +529,9 @@ export function loadFinances(): FinanceData {
       salaries,
       expenses,
       bonuses,
+      savings,
       categories,
+      splitEnabled: parsed.splitEnabled !== false,
       confirmedLogDates: [...new Set(confirmedLogDates)],
       dismissedSalaryMonth: isMonthKey(parsed.dismissedSalaryMonth)
         ? parsed.dismissedSalaryMonth

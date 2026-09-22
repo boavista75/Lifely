@@ -11,16 +11,24 @@ type Props = {
   onClose: () => void;
   defaultBucket?: FinanceBucket;
   defaultMonth?: string;
+  simple?: boolean;
 };
 
-export function BonusSheet({ open, onClose, defaultBucket, defaultMonth }: Props) {
+export function BonusSheet({
+  open,
+  onClose,
+  defaultBucket,
+  defaultMonth,
+  simple = false,
+}: Props) {
   return (
     <Sheet open={open} onClose={onClose} labelledBy="bonus-sheet-title" zIndex={60}>
       {open && (
         <BonusForm
-          key={`${defaultBucket ?? "bonus"}-${defaultMonth ?? "today"}`}
-          defaultBucket={defaultBucket}
+          key={`${simple ? "simple" : (defaultBucket ?? "bonus")}-${defaultMonth ?? "today"}`}
+          defaultBucket={simple ? "needs" : defaultBucket}
           defaultMonth={defaultMonth}
+          simple={simple}
           onClose={onClose}
         />
       )}
@@ -31,10 +39,12 @@ export function BonusSheet({ open, onClose, defaultBucket, defaultMonth }: Props
 function BonusForm({
   defaultBucket,
   defaultMonth,
+  simple,
   onClose,
 }: {
   defaultBucket?: FinanceBucket;
   defaultMonth?: string;
+  simple: boolean;
   onClose: () => void;
 }) {
   const addBonus = useFinancesStore((state) => state.addBonus);
@@ -102,24 +112,28 @@ function BonusForm({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 md:px-5">
         <p className="mb-4 text-[13px] leading-5 text-ink-secondary">
-          Ova uplata se ne deli na 50/30/20. Izaberi gde da ode.
+          {simple
+            ? "Ova uplata se dodaje na ukupan novac za taj mesec."
+            : "Ova uplata se ne deli na 50/30/20. Izaberi gde da ode."}
         </p>
 
-        <div className="mb-4">
-          <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
-            Kategorija
-          </span>
-          <SegmentedControl
-            value={bucket}
-            onChange={setBucket}
-            options={BUCKETS.map((entry) => ({
-              value: entry.id,
-              label: `${entry.percent} ${entry.shortLabel}`,
-            }))}
-            ariaLabel="Gde da ide uplata"
-            size="sm"
-          />
-        </div>
+        {!simple && (
+          <div className="mb-4">
+            <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">
+              Kategorija
+            </span>
+            <SegmentedControl
+              value={bucket}
+              onChange={setBucket}
+              options={BUCKETS.map((entry) => ({
+                value: entry.id,
+                label: `${entry.percent} ${entry.shortLabel}`,
+              }))}
+              ariaLabel="Gde da ide uplata"
+              size="sm"
+            />
+          </div>
+        )}
 
         <label className="mb-4 block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-secondary">

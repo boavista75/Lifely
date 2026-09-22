@@ -1,4 +1,11 @@
-import { monthKey, monthName, monthTitle, parseDateKey } from "@/lib/dates";
+import {
+  monthKey,
+  monthName,
+  monthTitle,
+  nextDateKey,
+  parseDateKey,
+  todayKey,
+} from "@/lib/dates";
 import type {
   ExpenseCategory,
   ExpenseCategoryDef,
@@ -8,6 +15,7 @@ import type {
   FinanceData,
   FinanceExpense,
   FinanceSalary,
+  FinanceSaving,
 } from "@/types";
 
 export const CATEGORY_LABEL_MAX = 40;
@@ -28,7 +36,9 @@ export const EMPTY_FINANCE_DATA: FinanceData = {
   salaries: [],
   expenses: [],
   bonuses: [],
+  savings: [],
   categories: EXPENSE_CATEGORIES.map((entry) => ({ ...entry })),
+  splitEnabled: true,
   confirmedLogDates: [],
   dismissedSalaryMonth: null,
   dismissedExpenseDate: null,
@@ -140,6 +150,10 @@ export function categoryIdFromLabel(
   return `${base}-${n}`;
 }
 
+export function labelsMatch(a: string, b: string): boolean {
+  return a.localeCompare(b, "sr-Latn", { sensitivity: "base" }) === 0;
+}
+
 export function findCategoryByLabel(
   label: string,
   bucket: ExpenseSpendBucket,
@@ -148,12 +162,17 @@ export function findCategoryByLabel(
   const normalized = normalizeCategoryLabel(label);
   if (!normalized) return undefined;
   return categories.find(
-    (entry) =>
-      entry.bucket === bucket &&
-      entry.label.localeCompare(normalized, "sr-Latn", {
-        sensitivity: "base",
-      }) === 0,
+    (entry) => entry.bucket === bucket && labelsMatch(entry.label, normalized),
   );
+}
+
+export function findCategoryByLabelAny(
+  label: string,
+  categories: readonly ExpenseCategoryDef[],
+): ExpenseCategoryDef | undefined {
+  const normalized = normalizeCategoryLabel(label);
+  if (!normalized) return undefined;
+  return categories.find((entry) => labelsMatch(entry.label, normalized));
 }
 
 export function currentMonthKey(): string {
@@ -201,8 +220,11 @@ export type MonthSummary = {
   salary: number;
   leftoverSalary: number;
   totalBonus: number;
+  totalSpent: number;
   totalWithBonus: number;
   cardsRemaining: number;
+  lockedSavings: number;
+  remainingSpendable: number;
   alloc: Record<FinanceBucket, number>;
   bonusByBucket: Record<FinanceBucket, number>;
   spentByBucket: Record<FinanceBucket, number>;
@@ -258,19 +280,25 @@ export function summarizeMonth(month: string, data: FinanceData): MonthSummary {
     savings: alloc.savings + bonusByBucket.savings - spentByBucket.savings,
   };
 
-  const totalExpenses = expenses.reduce((sum, entry) => sum + entry.amount, 0);
+  const totalSpent = expenses.reduce((sum, entry) => sum + entry.amount, 0);
   const totalBonus = bonuses.reduce((sum, entry) => sum + entry.amount, 0);
-  const leftoverSalary = Math.max(0, salary - totalExpenses);
-  const totalWithBonus = leftoverSalary + totalBonus - Math.max(0, totalExpenses - salary);
+  const leftoverSalary = salary - totalSpent;
+  const totalWithBonus = leftoverSalary + totalBonus;
   const cardsRemaining = remainingByBucket.needs + remainingByBucket.wants;
+  const lockedSavings =
+    data.savings.find((entry) => entry.month === month)?.amount ?? 0;
+  const remainingSpendable = totalWithBonus - lockedSavings;
 
   return {
     month,
     salary,
     leftoverSalary,
     totalBonus,
+    totalSpent,
     totalWithBonus,
     cardsRemaining,
+    lockedSavings,
+    remainingSpendable,
     alloc,
     bonusByBucket,
     spentByBucket,
@@ -286,6 +314,7 @@ export function listHistoryMonths(data: FinanceData): string[] {
   for (const salary of data.salaries) months.add(salary.month);
   for (const expense of data.expenses) months.add(expense.date.slice(0, 7));
   for (const bonus of data.bonuses) months.add(bonus.date.slice(0, 7));
+  for (const saving of data.savings) months.add(saving.month);
   return [...months].sort((a, b) => b.localeCompare(a));
 }
 
@@ -294,6 +323,13 @@ export function salaryForMonth(
   month: string,
 ): FinanceSalary | undefined {
   return data.salaries.find((entry) => entry.month === month);
+}
+
+export function savingForMonth(
+  data: FinanceData,
+  month: string,
+): FinanceSaving | undefined {
+  return data.savings.find((entry) => entry.month === month);
 }
 
 export function hasExpenseOnDate(data: FinanceData, date: string): boolean {
@@ -357,4 +393,24 @@ export function formatExpenseDate(dateKey: string): string {
     day: "numeric",
     month: "short",
   });
+}
+
+export function expenseDateHeading(dateKey: string): string {
+  const today = todayKey();
+  const formatted = formatExpenseDate(dateKey);
+  if (dateKey === today) return `Danas, ${formatted}`;
+  if (nextDateKey(dateKey) === today) return `Juče, ${formatted}`;
+  return formatted;
+}
+
+export function groupByDate<T extends { date: string }>(
+  items: readonly T[],
+): { date: string; items: T[] }[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const list = groups.get(item.date);
+    if (list) list.push(item);
+    else groups.set(item.date, [item]);
+  }
+  return [...groups.entries()].map(([date, items]) => ({ date, items }));
 }
